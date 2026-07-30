@@ -46,14 +46,14 @@ The engine continually checks the principal balance, intercepts the final payoff
 
 ## Installation & Setup
 
-2. **Install core dependencies and run:**
-
 ```bash
 npm install
 npm run dev
 ```
 
 Navigate to the local host URL provided in your terminal (typically http://localhost:5173).
+
+
 
 ## Legal & Financial Disclaimer
 This application is for educational and informational purposes only. It does not constitute financial, investment, legal, or tax advice. Projections are inherently hypothetical, based entirely on user inputs and assumed constant rates of return, which are not guaranteed. Actual market conditions, variable interest rates, inflation, and tax implications will vary over time and may significantly alter these figures. Consult with a qualified, licensed financial advisor before making financial decisions.
