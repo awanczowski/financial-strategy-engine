@@ -5,5 +5,5 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   // Replace 'strategy-engine' with your EXACT GitHub repository name
-  base: '/strategy-engine/', 
+  base: '/financial-strategy-engine/', 
 })
