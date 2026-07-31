@@ -100,7 +100,7 @@ const RateAdjustmentRow = ({ item, onUpdate, onRemove }) => (
 );
 
 // Constants
-const ACTIVE_SESSION_KEY = 'financialEngine_activeSession_v12';
+const ACTIVE_SESSION_KEY = 'financialEngine_activeSession_v13';
 const defaultStartDate = "2026-08-01";
 const defaultRetirementDate = "2051-08-01";
 
@@ -108,7 +108,7 @@ const defaultLoanConfig = {
   principal: 400000,
   mortgageRate: 6.5, 
   years: 30,           
-  simulationYears: 55, // Increased to 55 years to accurately test a 30-year retirement lifespan
+  simulationYears: 55, 
   initialInvestment: 0,
   investRateLow: 5.0,
   investRateMed: 8.0,
@@ -122,7 +122,7 @@ const defaultLoanConfig = {
   loanStartDate: defaultStartDate,
   enableRetirement: false,
   retirementDate: defaultRetirementDate,
-  withdrawalType: 'percent', // 'percent' or 'fixed'
+  withdrawalType: 'percent_fixed', // 'percent_fixed', 'percent_dynamic', or 'fixed'
   retirementWithdrawalRate: 4.0,
   retirementFixedWithdrawal: 60000,
   retirementGrowthRate: 5.0,
@@ -171,7 +171,6 @@ export default function App() {
   const handleConfigChange = (e) => {
     const { name, value, type, checked } = e.target;
     
-    // Fix for the withdrawal type string bug
     let finalValue = value;
     if (type === 'checkbox') {
       finalValue = checked;
@@ -264,7 +263,6 @@ export default function App() {
     let payoffMonth = null;
     let firstMonthBreakdown = null;
 
-    // We will lock the withdrawal amounts on the first month of retirement
     let lockedWithdrawalLow = null;
     let lockedWithdrawalMed = null;
     let lockedWithdrawalHigh = null;
@@ -355,25 +353,29 @@ export default function App() {
       let actualWithdrawnMed = 0; 
 
       if (isRetired) {
-        if (lockedWithdrawalMed === null) {
-          // Calculate and lock in the withdrawal amount on month 1 of retirement
-          if (loanConfig.withdrawalType === 'fixed') {
-            const fixedMonthly = (Number(loanConfig.retirementFixedWithdrawal) || 0) / 12;
-            lockedWithdrawalLow = fixedMonthly;
-            lockedWithdrawalMed = fixedMonthly;
-            lockedWithdrawalHigh = fixedMonthly;
-          } else {
+        if (loanConfig.withdrawalType === 'fixed') {
+          const fixedMonthly = (Number(loanConfig.retirementFixedWithdrawal) || 0) / 12;
+          withdrawalLow = fixedMonthly;
+          withdrawalMed = fixedMonthly;
+          withdrawalHigh = fixedMonthly;
+        } 
+        else if (loanConfig.withdrawalType === 'percent_fixed') {
+          if (lockedWithdrawalMed === null) {
             const pullRateAnnual = (Number(loanConfig.retirementWithdrawalRate) || 0) / 100;
             lockedWithdrawalLow = (currentInvestmentLow * pullRateAnnual) / 12;
             lockedWithdrawalMed = (currentInvestmentMed * pullRateAnnual) / 12;
             lockedWithdrawalHigh = (currentInvestmentHigh * pullRateAnnual) / 12;
           }
+          withdrawalLow = lockedWithdrawalLow;
+          withdrawalMed = lockedWithdrawalMed;
+          withdrawalHigh = lockedWithdrawalHigh;
         }
-
-        // Apply the locked amounts
-        withdrawalLow = lockedWithdrawalLow;
-        withdrawalMed = lockedWithdrawalMed;
-        withdrawalHigh = lockedWithdrawalHigh;
+        else if (loanConfig.withdrawalType === 'percent_dynamic') {
+          const pullRateAnnual = (Number(loanConfig.retirementWithdrawalRate) || 0) / 100;
+          withdrawalLow = (currentInvestmentLow * pullRateAnnual) / 12;
+          withdrawalMed = (currentInvestmentMed * pullRateAnnual) / 12;
+          withdrawalHigh = (currentInvestmentHigh * pullRateAnnual) / 12;
+        }
 
         // Prevent ghost withdrawals tracking if the portfolio hits zero
         const availableMed = currentInvestmentMed + (currentInvestmentMed * yieldMed) + investContributionThisMonth;
@@ -472,15 +474,17 @@ export default function App() {
           }
         }
 
-        const isFixedWithdrawal = loanConfig.withdrawalType === 'fixed';
-        const pullRateAnnual = loanConfig.enableRetirement && !isFixedWithdrawal ? (Number(loanConfig.retirementWithdrawalRate) || 0) / 100 : 0;
-        const fixedMonthlyInput = isFixedWithdrawal ? (Number(loanConfig.retirementFixedWithdrawal) || 0) / 12 : 0;
+        const isFixed = loanConfig.withdrawalType === 'fixed';
+        const isPercentFixed = loanConfig.withdrawalType === 'percent_fixed';
+        const isPercentDynamic = loanConfig.withdrawalType === 'percent_dynamic';
+        
+        const pullRateAnnual = loanConfig.enableRetirement && (isPercentFixed || isPercentDynamic) ? (Number(loanConfig.retirementWithdrawalRate) || 0) / 100 : 0;
+        const fixedMonthlyInput = isFixed ? (Number(loanConfig.retirementFixedWithdrawal) || 0) / 12 : 0;
         
         const retMean = (Number(loanConfig.retirementGrowthRate) || 0) / 100;
         const accumMean = (Number(accumRate) || 0) / 100;
 
         for (let i = 0; i < iterations; i++) {
-          // Liquid portfolio only. Real estate is explicitly excluded.
           let port = Number(loanConfig.initialInvestment) || 0;
           let failed = false;
           let lockedWithdrawal = null;
@@ -488,27 +492,27 @@ export default function App() {
           for (let m = 0; m < monthContributions.length; m++) {
             const isRetired = (m + 1) >= retirementStartMonth;
 
-            // Lock the withdrawal amount on the very first month of retirement for this specific simulation path
-            if (isRetired && lockedWithdrawal === null) {
-              if (isFixedWithdrawal) {
-                lockedWithdrawal = fixedMonthlyInput;
-              } else {
-                lockedWithdrawal = (port * pullRateAnnual) / 12;
-              }
+            // Lock the withdrawal amount on the very first month of retirement if percent_fixed
+            if (isRetired && lockedWithdrawal === null && isPercentFixed) {
+              lockedWithdrawal = (port * pullRateAnnual) / 12;
             }
 
-            // Calculate returns only if still alive
             if (!failed) {
               const annualMean = isRetired ? retMean : accumMean;
               const monthlyMean = annualMean / 12;
               const r = randomNormal(monthlyMean, monthlyStdDev);
               
-              let withdrawal = isRetired ? lockedWithdrawal : 0;
+              let withdrawal = 0;
+              if (isRetired) {
+                if (isFixed) withdrawal = fixedMonthlyInput;
+                else if (isPercentFixed) withdrawal = lockedWithdrawal;
+                else if (isPercentDynamic) withdrawal = (port * pullRateAnnual) / 12;
+              }
               
               port = port * (1 + r) + monthContributions[m] - withdrawal;
               
-              // If liquid cash drops below 0, declare bankrupt path
-              if (port <= 0) {
+              // If liquid cash drops below $1, declare bankrupt path
+              if (port <= 1) {
                 port = 0;
                 failed = true; 
               }
@@ -922,7 +926,7 @@ export default function App() {
               {/* === RIGHT COLUMN: WEALTH & INVESTING === */}
               <div className="col-lg-6 ps-lg-5">
                 <h5 className="scandi-label text-black mb-4 border-bottom border-dark pb-2 fs-6">Wealth & Investing</h5>
-                
+
                 {/* 1. Portfolio Base */}
                 <h6 className="scandi-label text-muted mb-3">Portfolio Base</h6>
                 <div className="row g-3 align-items-end mb-4">
@@ -1002,21 +1006,22 @@ export default function App() {
                       <div className="col-sm-6">
                         <label className="form-label scandi-label">Withdrawal Type</label>
                         <select name="withdrawalType" className="form-select scandi-input border-dark" value={loanConfig.withdrawalType} onChange={handleConfigChange}>
-                          <option value="percent">Percentage (%)</option>
+                          <option value="percent_fixed">% of Starting Balance (Locked)</option>
+                          <option value="percent_dynamic">% of Current Balance (Dynamic)</option>
                           <option value="fixed">Fixed Amount ($)</option>
                         </select>
                       </div>
 
                       <div className="col-sm-6">
-                        {loanConfig.withdrawalType === 'percent' ? (
-                          <>
-                            <label className="form-label scandi-label">Yearly Pull (%)</label>
-                            <input name="retirementWithdrawalRate" type="number" step="0.1" className="form-control scandi-input border-dark" value={loanConfig.retirementWithdrawalRate} onChange={handleConfigChange} />
-                          </>
-                        ) : (
+                        {loanConfig.withdrawalType === 'fixed' ? (
                           <>
                             <label className="form-label scandi-label">Yearly Pull ($)</label>
                             <input name="retirementFixedWithdrawal" type="number" step="1000" className="form-control scandi-input border-dark" value={loanConfig.retirementFixedWithdrawal} onChange={handleConfigChange} />
+                          </>
+                        ) : (
+                          <>
+                            <label className="form-label scandi-label">Yearly Pull (%)</label>
+                            <input name="retirementWithdrawalRate" type="number" step="0.1" className="form-control scandi-input border-dark" value={loanConfig.retirementWithdrawalRate} onChange={handleConfigChange} />
                           </>
                         )}
                       </div>
