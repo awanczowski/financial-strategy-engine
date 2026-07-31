@@ -1,8 +1,3 @@
-Here is the fully updated README.md incorporating the new two-column layout architecture and the advanced Monte Carlo sequence-of-return risk simulation.
-
-You can copy and paste this directly into your project:
-
-Markdown
 # Strategy Engine: Paydown vs. Invest Calculator
 
 ## Overview
@@ -48,7 +43,7 @@ The architecture relies on React hooks to manage complex concurrent states witho
 ### Algorithmic Engine & Monte Carlo Math
 The core of the application is a pure JavaScript simulation loop. 
 
-#### Deterministic Path:
+#### Deterministic Path
 
 The core of the application is a pure JavaScript simulation loop. It steps through the timeline month-by-month to accurately handle compounding mismatches (e.g., standard US mortgages compound monthly, while bi-weekly payments alter the principal intra-month). It calculates base standard payments using the standard amortized loan formula:
 
