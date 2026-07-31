@@ -30,6 +30,15 @@ const formatCurrencyCompact = (val) => {
   }).format(val || 0);
 };
 
+// Box-Muller transform for generating normally distributed random market returns
+const randomNormal = (mean, stdDev) => {
+  let u1 = 0, u2 = 0;
+  while (u1 === 0) u1 = Math.random();
+  while (u2 === 0) u2 = Math.random();
+  const z = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
+  return z * stdDev + mean;
+};
+
 // Extracted UI Components
 const StrategyRow = ({ item, onUpdate, onRemove }) => (
   <div className="d-flex gap-2 mb-2 align-items-center flex-wrap flex-sm-nowrap">
@@ -91,7 +100,7 @@ const RateAdjustmentRow = ({ item, onUpdate, onRemove }) => (
 );
 
 // Constants
-const ACTIVE_SESSION_KEY = 'financialEngine_activeSession_v8';
+const ACTIVE_SESSION_KEY = 'financialEngine_activeSession_v9';
 const defaultStartDate = "2026-08-01";
 const defaultRetirementDate = "2051-08-01";
 
@@ -141,6 +150,11 @@ export default function App() {
   const [extraPayments, setExtraPayments] = useState(activeSession?.extraPayments || defaultExtraPayments);
   const [investments, setInvestments] = useState(activeSession?.investments || defaultInvestments);
   const [rateAdjustments, setRateAdjustments] = useState(activeSession?.rateAdjustments || []);
+
+  // Monte Carlo State
+  const [showMonteCarloModal, setShowMonteCarloModal] = useState(false);
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [monteCarloResults, setMonteCarloResults] = useState(null);
 
   useEffect(() => {
     const sessionData = {
@@ -192,7 +206,7 @@ export default function App() {
   };
 
   // Heavy Simulation Engine
-  const { scheduleData, summary, initialBreakdown } = useMemo(() => {
+  const { scheduleData, summary, initialBreakdown, monthContributions } = useMemo(() => {
     const loanMonths = (Number(loanConfig.years) || 0) * 12;
     const simulationMonths = (Number(loanConfig.simulationYears) || 0) * 12;
     const isBiweekly = loanConfig.isBiweekly;
@@ -224,6 +238,8 @@ export default function App() {
     let currentHomeValueHigh = Number(loanConfig.initialHomeValue) || 0;
     
     let yearlyData = [];
+    let trackedMonthContributions = [];
+    
     let yearMortgagePaid = 0;
     let yearInterestPaid = 0;
     let yearInvestContributed = 0;
@@ -310,6 +326,9 @@ export default function App() {
         investContributionThisMonth = 0;
       }
 
+      // Store net cash flow additions for Monte Carlo simulation
+      trackedMonthContributions.push(investContributionThisMonth);
+
       let yieldLow = isRetired ? ((Number(loanConfig.retirementGrowthRate) || 0) / 100) / 12 : monthlyInvestRateLow;
       let yieldMed = isRetired ? ((Number(loanConfig.retirementGrowthRate) || 0) / 100) / 12 : monthlyInvestRateMed;
       let yieldHigh = isRetired ? ((Number(loanConfig.retirementGrowthRate) || 0) / 100) / 12 : monthlyInvestRateHigh;
@@ -364,6 +383,7 @@ export default function App() {
     return {
       scheduleData: yearlyData,
       initialBreakdown: firstMonthBreakdown,
+      monthContributions: trackedMonthContributions,
       summary: {
         totalInterestPaid,
         totalInvestContributed,
@@ -383,6 +403,103 @@ export default function App() {
       }
     };
   }, [loanConfig, extraPayments, investments, rateAdjustments]);
+
+  // Monte Carlo Execution Engine
+  const handleOpenMonteCarlo = () => {
+    setShowMonteCarloModal(true);
+    setIsSimulating(true);
+    setMonteCarloResults(null);
+    
+    // Non-blocking timeout allows the UI to render the loading spinner before crunching matrices
+    setTimeout(() => {
+      const iterations = 1000;
+      const annualStdDev = 0.15; // 15% Volatility baseline
+      const monthlyStdDev = annualStdDev / Math.sqrt(12);
+      
+      const retirementStartMonth = loanConfig.enableRetirement 
+        ? getMonthOffset(loanConfig.loanStartDate, loanConfig.retirementDate) 
+        : Infinity;
+
+      const totalYears = Math.floor(monthContributions.length / 12);
+
+      const runSimulation = (accumRate, trackPaths = false) => {
+        let successCount = 0;
+        let finalPorts = [];
+        let yearlyPaths = [];
+        
+        if (trackPaths) {
+          for (let y = 0; y < totalYears; y++) {
+            yearlyPaths.push(new Float32Array(iterations));
+          }
+        }
+
+        const pullRate = loanConfig.enableRetirement ? ((Number(loanConfig.retirementWithdrawalRate) || 0) / 100) / 12 : 0;
+        const retMean = (Number(loanConfig.retirementGrowthRate) || 0) / 100;
+        const accumMean = (Number(accumRate) || 0) / 100;
+
+        for (let i = 0; i < iterations; i++) {
+          let port = Number(loanConfig.initialInvestment) || 0;
+          let failed = false;
+          
+          for (let m = 0; m < monthContributions.length; m++) {
+            const isRetired = (m + 1) >= retirementStartMonth;
+            const annualMean = isRetired ? retMean : accumMean;
+            const monthlyMean = annualMean / 12;
+            
+            const r = randomNormal(monthlyMean, monthlyStdDev);
+            let withdrawal = isRetired ? port * pullRate : 0;
+            
+            port = port * (1 + r) + monthContributions[m] - withdrawal;
+            
+            if (port <= 0) {
+              port = 0;
+              failed = true;
+            }
+
+            if ((m + 1) % 12 === 0 && trackPaths) {
+              yearlyPaths[Math.floor(m / 12)][i] = port;
+            }
+          }
+          finalPorts.push(port);
+          if (!failed && port > 0) successCount++;
+        }
+
+        finalPorts.sort((a, b) => a - b);
+        
+        let chartData = [];
+        if (trackPaths) {
+          for (let y = 0; y < totalYears; y++) {
+            let yearData = Array.from(yearlyPaths[y]).sort((a, b) => a - b);
+            chartData.push({
+              year: y + 1,
+              p10: yearData[Math.floor(iterations * 0.10)],
+              p50: yearData[Math.floor(iterations * 0.50)],
+              p90: yearData[Math.floor(iterations * 0.90)]
+            });
+          }
+        }
+
+        return {
+          successRate: (successCount / iterations) * 100,
+          median: finalPorts[Math.floor(iterations * 0.50)],
+          chartData
+        };
+      };
+
+      // Run simulations across the Low, Med, and High profiles
+      // We only track the exact time-series plotting data for the Medium path to display on the chart
+      const lowRes = runSimulation(loanConfig.investRateLow, false);
+      const medRes = runSimulation(loanConfig.investRateMed, true); 
+      const highRes = runSimulation(loanConfig.investRateHigh, false);
+
+      setMonteCarloResults({
+        low: lowRes,
+        med: medRes,
+        high: highRes
+      });
+      setIsSimulating(false);
+    }, 400); 
+  };
 
   return (
     <div 
@@ -421,11 +538,101 @@ export default function App() {
         .scandi-header { font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; }
         .scandi-label { font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; font-size: 0.75rem; }
 
-        /* Clean Custom Grid Divider */
         @media (min-width: 992px) {
           .border-lg-end { border-right: 1px solid #e5e5e5 !important; }
         }
       `}</style>
+
+      {/* Monte Carlo Modal Overlay */}
+      {showMonteCarloModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 1040, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="card border-dark border-2 rounded-0 shadow-lg" style={{ width: '95%', maxWidth: '1100px', zIndex: 1050, maxHeight: '95vh', overflowY: 'auto' }}>
+            <div className="card-header bg-white border-dark d-flex justify-content-between align-items-center p-3 p-md-4">
+              <h5 className="m-0 scandi-header text-black">Monte Carlo Analysis</h5>
+              <button className="btn-close" onClick={() => setShowMonteCarloModal(false)}></button>
+            </div>
+            
+            <div className="card-body p-3 p-md-4 bg-white">
+              {isSimulating ? (
+                <div className="py-5 text-center">
+                  <div className="spinner-border text-dark mb-3" role="status" style={{ width: '3rem', height: '3rem', borderWidth: '0.25rem' }}></div>
+                  <h6 className="scandi-label text-muted">Generating 3,000 statistical market paths...</h6>
+                </div>
+              ) : monteCarloResults && (
+                <div className="row g-4">
+                  
+                  {/* Left Column: Metrics */}
+                  <div className="col-lg-4 text-start">
+                    <h6 className="scandi-header text-black mb-3">Survival Probability</h6>
+                    <p className="text-muted small mb-4 lh-base">
+                      Based on 1,000 randomized market paths (assuming 15% annualized volatility) applied against your Low, Medium, and High accumulation yield estimates.
+                    </p>
+                    
+                    <div className="border border-dark">
+                      <div className="d-flex justify-content-between align-items-center border-bottom border-light p-3">
+                        <div>
+                          <span className="scandi-label text-muted d-block">Low Base ({loanConfig.investRateLow}%)</span>
+                          <small className="text-muted fw-bold">Med End: {formatCurrencyCompact(monteCarloResults.low.median)}</small>
+                        </div>
+                        <div className="text-end">
+                          <span className="fw-bolder fs-4 text-muted d-block lh-1">{monteCarloResults.low.successRate.toFixed(1)}%</span>
+                          <span className="scandi-label text-muted" style={{fontSize: '0.65rem'}}>Success</span>
+                        </div>
+                      </div>
+                      
+                      <div className="d-flex justify-content-between align-items-center border-bottom border-light p-3 bg-light border-start border-dark border-4">
+                        <div>
+                          <span className="scandi-label text-black d-block">Med Base ({loanConfig.investRateMed}%)</span>
+                          <small className="text-black fw-bold">Med End: {formatCurrencyCompact(monteCarloResults.med.median)}</small>
+                        </div>
+                        <div className="text-end">
+                          <span className="fw-bolder fs-3 text-black d-block lh-1">{monteCarloResults.med.successRate.toFixed(1)}%</span>
+                          <span className="scandi-label text-black" style={{fontSize: '0.65rem'}}>Success</span>
+                        </div>
+                      </div>
+
+                      <div className="d-flex justify-content-between align-items-center p-3">
+                        <div>
+                          <span className="scandi-label text-muted d-block">High Base ({loanConfig.investRateHigh}%)</span>
+                          <small className="text-muted fw-bold">Med End: {formatCurrencyCompact(monteCarloResults.high.median)}</small>
+                        </div>
+                        <div className="text-end">
+                          <span className="fw-bolder fs-4 text-muted d-block lh-1">{monteCarloResults.high.successRate.toFixed(1)}%</span>
+                          <span className="scandi-label text-muted" style={{fontSize: '0.65rem'}}>Success</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Column: Plotted Chart */}
+                  <div className="col-lg-8">
+                    <h6 className="scandi-header text-black mb-3">Portfolio Spread (Medium Scenario)</h6>
+                    <div className="border border-dark p-3" style={{ height: '400px' }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={monteCarloResults.med.chartData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" />
+                          <XAxis dataKey="year" stroke="#000" tick={{ fill: '#000', fontWeight: 'bold' }} />
+                          <YAxis stroke="#000" tick={{ fill: '#000', fontWeight: 'bold' }} tickFormatter={(val) => formatCurrencyCompact(val)} />
+                          <Tooltip 
+                            formatter={(value) => formatCurrency(value)} 
+                            contentStyle={{ backgroundColor: '#fff', border: '1px solid #000', color: '#000', borderRadius: '0', fontWeight: 'bold' }} 
+                            itemStyle={{ color: '#000' }}
+                          />
+                          <Legend wrapperStyle={{ paddingTop: '20px', fontWeight: 'bold' }} />
+                          <Line type="monotone" dataKey="p90" stroke="#93c5fd" name="90th Percentile (Great)" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                          <Line type="monotone" dataKey="p50" stroke="#3b82f6" name="50th Percentile (Median)" strokeWidth={4} dot={false} activeDot={{ r: 6, fill: '#3b82f6' }} />
+                          <Line type="monotone" dataKey="p10" stroke="#93c5fd" name="10th Percentile (Poor)" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Sticky Top Navigation Bar */}
       <header className="w-100 border-bottom border-dark bg-white px-4 py-3" style={{ position: 'sticky', top: 0, zIndex: 1030 }}>
@@ -757,6 +964,13 @@ export default function App() {
                             Stop all new contributions at retirement
                           </label>
                         </div>
+                      </div>
+                      
+                      {/* MONTE CARLO TRIGGER */}
+                      <div className="col-12 mt-4 pt-4 border-top border-light">
+                        <button className="btn btn-dark fw-bold w-100 py-2 scandi-label fs-6 text-uppercase" onClick={handleOpenMonteCarlo}>
+                          Run Monte Carlo Analysis
+                        </button>
                       </div>
                     </div>
                   )}
