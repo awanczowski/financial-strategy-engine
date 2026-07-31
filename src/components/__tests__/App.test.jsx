@@ -5,9 +5,11 @@ import '@testing-library/jest-dom';
 import App from '../../App.jsx';
 
 describe('App Component', () => {
-  it('renders the Strategy Engine navigation header', () => {
+  it('renders the Strategy Engine navigation header with mode toggles and inflation input', () => {
     render(<App />);
     expect(screen.getByText('Strategy Engine')).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Inflation View Mode' })).toBeInTheDocument();
+    expect(screen.getByLabelText(/Estimated Inflation Rate Percentage/i)).toBeInTheDocument();
   });
 
   it('renders dashboard card titles', () => {
@@ -22,3 +24,4 @@ describe('App Component', () => {
     expect(screen.getByText('Wealth & Investing')).toBeInTheDocument();
   });
 });
+
