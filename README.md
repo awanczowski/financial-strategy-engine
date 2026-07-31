@@ -59,6 +59,10 @@ The engine continually checks the principal balance, intercepts the final payoff
 #### Stochastic Path (Monte Carlo)
 When triggered, the engine extracts the exact net cash flows (contributions minus dynamic withdrawals) from the deterministic path. It then uses a **Box-Muller transform** algorithm to generate normally distributed random numbers, applying randomized monthly returns against the portfolio balance for 1,000 separate iterations per yield profile, accurately simulating sequence of return risk.
 
+* **Zeno's Paradox of Withdrawals:** If a calculator simply pulls a flat percentage (e.g., 4%) from a declining portfolio balance every year, the portfolio mathematically can never reach $0. This creates a false 100% success rate in Monte Carlo simulations. *Strategy Engine* fixes this by converting your selected percentage into a fixed dollar amount based on the portfolio value on the exact day you retire, locking it in for the remainder of the simulation to allow for realistic portfolio depletion.
+* **The Simulation Horizon Trap:** A 35-year simulation is great for wealth accumulation, but fails to stress-test a 30-year retirement. The engine defaults to a 55-year simulation span to ensure the decumulation phase is subjected to full long-term market volatility.
+* **Illiquid Asset Isolation:** Your real estate equity is strictly walled off from your liquid assets. The Monte Carlo success/failure condition is mapped *exclusively* to your investment portfolio. A $2,000,000 paid-off home will not artificially save a $0 liquid portfolio from failing the stress test.
+* **Sequence of Return Risk:** Straight-line averages (e.g., a constant 8% yield) lie. Withdrawing funds during a market downturn damages a portfolio exponentially more than withdrawing during a bull market. The Monte Carlo engine utilizes a Box-Muller transform to introduce random normal distribution (volatility), actively stress-testing the *order* of your returns, not just the average.
 
 ---
 
