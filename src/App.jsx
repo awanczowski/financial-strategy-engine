@@ -81,6 +81,7 @@ function MainContent() {
         isSimulating={isSimulating}
         results={monteCarloResults}
         loanConfig={loanConfig}
+        onReRun={handleOpenMonteCarlo}
       />
 
       {/* Sticky Top Navigation Bar */}

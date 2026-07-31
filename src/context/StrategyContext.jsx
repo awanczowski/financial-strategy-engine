@@ -132,16 +132,15 @@ export function StrategyProvider({ children }) {
   }, [scheduleData, viewMode]);
 
   // Monte Carlo Execution Engine
-  const handleOpenMonteCarlo = () => {
+  const handleOpenMonteCarlo = (overrideOptions = {}) => {
     setShowMonteCarloModal(true);
     setIsSimulating(true);
-    setMonteCarloResults(null);
     
     setTimeout(() => {
-      const results = runMonteCarloSimulation(monthContributions, loanConfig);
+      const results = runMonteCarloSimulation(monthContributions, loanConfig, overrideOptions);
       setMonteCarloResults(results);
       setIsSimulating(false);
-    }, 400); 
+    }, 250); 
   };
 
   const value = {
