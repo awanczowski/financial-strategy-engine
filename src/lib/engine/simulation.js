@@ -6,6 +6,7 @@ export const runSimulationEngine = (loanConfig, extraPayments = [], investments 
   const isBiweekly = loanConfig.isBiweekly;
   const baseDate = loanConfig.loanStartDate;
   const retirementStartMonth = loanConfig.enableRetirement ? getMonthOffset(baseDate, loanConfig.retirementDate) : Infinity;
+  const inflationRateAnnual = (Number(loanConfig.estimatedInflationRate) || 0) / 100;
   
   const activeExtra = extraPayments.map(p => ({ ...p, startMonth: getMonthOffset(baseDate, p.startDate) }));
   const activeInvestments = investments.map(p => ({ ...p, startMonth: getMonthOffset(baseDate, p.startDate) }));
@@ -39,18 +40,29 @@ export const runSimulationEngine = (loanConfig, extraPayments = [], investments 
   let yearInvestContributed = 0;
   let yearWithdrawn = 0;
 
+  let yearMortgagePaidReal = 0;
+  let yearInterestPaidReal = 0;
+  let yearInvestContributedReal = 0;
+  let yearWithdrawnReal = 0;
+
   let totalInterestPaid = 0;
   let totalInvestContributed = 0;
   let totalWithdrawnOverall = 0;
+  let totalInterestPaidReal = 0;
+  let totalInvestContributedReal = 0;
+  let totalWithdrawnOverallReal = 0;
+
   let payoffMonth = null;
   let firstMonthBreakdown = null;
 
   let lockedWithdrawalLow = null;
   let lockedWithdrawalMed = null;
   let lockedWithdrawalHigh = null;
+  let currentFixedMonthlyWithdrawal = (Number(loanConfig.retirementFixedWithdrawal) || 0) / 12;
 
   for (let month = 1; month <= simulationMonths; month++) {
     const isRetired = month >= retirementStartMonth;
+    const discountFactor = Math.pow(1 + inflationRateAnnual, -(month / 12));
 
     const adjustmentThisMonth = activeRates.find(adj => adj.startMonth === month);
     if (adjustmentThisMonth && currentPrincipal > 0) {
@@ -113,6 +125,10 @@ export const runSimulationEngine = (loanConfig, extraPayments = [], investments 
       yearMortgagePaid += totalPaymentThisMonth;
       yearInterestPaid += interestThisMonth;
       totalInterestPaid += interestThisMonth;
+
+      yearMortgagePaidReal += totalPaymentThisMonth * discountFactor;
+      yearInterestPaidReal += interestThisMonth * discountFactor;
+      totalInterestPaidReal += interestThisMonth * discountFactor;
     } else {
       if (loanConfig.divertAfterPayoff) {
         let divertedStandard = month <= loanMonths ? totalBasePaymentThisMonth : 0;
@@ -135,11 +151,19 @@ export const runSimulationEngine = (loanConfig, extraPayments = [], investments 
     let actualWithdrawnMed = 0; 
 
     if (isRetired) {
+      // Annual COLA escalation for fixed and locked percentage withdrawals every 12 months in retirement
+      const monthsInRetirement = month - retirementStartMonth;
+      if (monthsInRetirement > 0 && monthsInRetirement % 12 === 0) {
+        currentFixedMonthlyWithdrawal *= (1 + inflationRateAnnual);
+        if (lockedWithdrawalLow !== null) lockedWithdrawalLow *= (1 + inflationRateAnnual);
+        if (lockedWithdrawalMed !== null) lockedWithdrawalMed *= (1 + inflationRateAnnual);
+        if (lockedWithdrawalHigh !== null) lockedWithdrawalHigh *= (1 + inflationRateAnnual);
+      }
+
       if (loanConfig.withdrawalType === 'fixed') {
-        const fixedMonthly = (Number(loanConfig.retirementFixedWithdrawal) || 0) / 12;
-        withdrawalLow = fixedMonthly;
-        withdrawalMed = fixedMonthly;
-        withdrawalHigh = fixedMonthly;
+        withdrawalLow = currentFixedMonthlyWithdrawal;
+        withdrawalMed = currentFixedMonthlyWithdrawal;
+        withdrawalHigh = currentFixedMonthlyWithdrawal;
       } 
       else if (loanConfig.withdrawalType === 'percent_fixed') {
         if (lockedWithdrawalMed === null) {
@@ -175,13 +199,20 @@ export const runSimulationEngine = (loanConfig, extraPayments = [], investments 
 
     yearInvestContributed += investContributionThisMonth;
     totalInvestContributed += investContributionThisMonth;
+    yearInvestContributedReal += investContributionThisMonth * discountFactor;
+    totalInvestContributedReal += investContributionThisMonth * discountFactor;
     
     yearWithdrawn += actualWithdrawnMed;
     totalWithdrawnOverall += actualWithdrawnMed;
+    yearWithdrawnReal += actualWithdrawnMed * discountFactor;
+    totalWithdrawnOverallReal += actualWithdrawnMed * discountFactor;
 
     if (month % 12 === 0) {
+      const yearIndex = month / 12;
+      const yearDiscountFactor = Math.pow(1 + inflationRateAnnual, -yearIndex);
+
       yearlyData.push({
-        year: month / 12,
+        year: yearIndex,
         mortgageBalance: Math.max(0, currentPrincipal),
         homeMed: currentHomeValueMed,
         invLow: currentInvestmentLow,
@@ -194,15 +225,35 @@ export const runSimulationEngine = (loanConfig, extraPayments = [], investments 
         interestPaid: yearInterestPaid,
         investContributed: yearInvestContributed,
         withdrawn: yearWithdrawn,
-        activeRate: currentAnnualRate 
+        activeRate: currentAnnualRate,
+
+        // Real (Discounted to Present Value) equivalents
+        mortgageBalanceReal: Math.max(0, currentPrincipal) * yearDiscountFactor,
+        homeMedReal: currentHomeValueMed * yearDiscountFactor,
+        invLowReal: currentInvestmentLow * yearDiscountFactor,
+        invMedReal: currentInvestmentMed * yearDiscountFactor,
+        invHighReal: currentInvestmentHigh * yearDiscountFactor,
+        netWorthLowReal: ((currentInvestmentLow + currentHomeValueLow) - Math.max(0, currentPrincipal)) * yearDiscountFactor,
+        netWorthMedReal: ((currentInvestmentMed + currentHomeValueMed) - Math.max(0, currentPrincipal)) * yearDiscountFactor,
+        netWorthHighReal: ((currentInvestmentHigh + currentHomeValueHigh) - Math.max(0, currentPrincipal)) * yearDiscountFactor,
+        mortgagePaidReal: yearMortgagePaidReal,
+        interestPaidReal: yearInterestPaidReal,
+        investContributedReal: yearInvestContributedReal,
+        withdrawnReal: yearWithdrawnReal
       });
       
       yearMortgagePaid = 0;
       yearInterestPaid = 0;
       yearInvestContributed = 0;
       yearWithdrawn = 0;
+      yearMortgagePaidReal = 0;
+      yearInterestPaidReal = 0;
+      yearInvestContributedReal = 0;
+      yearWithdrawnReal = 0;
     }
   }
+
+  const finalDiscountFactor = Math.pow(1 + inflationRateAnnual, -(simulationMonths / 12));
 
   return {
     scheduleData: yearlyData,
@@ -212,6 +263,9 @@ export const runSimulationEngine = (loanConfig, extraPayments = [], investments 
       totalInterestPaid,
       totalInvestContributed,
       totalWithdrawnOverall,
+      totalInterestPaidReal,
+      totalInvestContributedReal,
+      totalWithdrawnOverallReal,
       payoffString: payoffMonth 
         ? `Yr ${Math.ceil(payoffMonth / 12)}, Mo ${payoffMonth % 12 === 0 ? 12 : payoffMonth % 12}` 
         : "Not paid off",
@@ -223,7 +277,18 @@ export const runSimulationEngine = (loanConfig, extraPayments = [], investments 
       finalInvHigh: currentInvestmentHigh,
       finalNetWorthLow: (currentInvestmentLow + currentHomeValueLow) - Math.max(0, currentPrincipal),
       finalNetWorthMed: (currentInvestmentMed + currentHomeValueMed) - Math.max(0, currentPrincipal),
-      finalNetWorthHigh: (currentInvestmentHigh + currentHomeValueHigh) - Math.max(0, currentPrincipal)
+      finalNetWorthHigh: (currentInvestmentHigh + currentHomeValueHigh) - Math.max(0, currentPrincipal),
+
+      // Real discounted summary figures
+      finalHomeLowReal: currentHomeValueLow * finalDiscountFactor,
+      finalHomeMedReal: currentHomeValueMed * finalDiscountFactor,
+      finalHomeHighReal: currentHomeValueHigh * finalDiscountFactor,
+      finalInvLowReal: currentInvestmentLow * finalDiscountFactor,
+      finalInvMedReal: currentInvestmentMed * finalDiscountFactor,
+      finalInvHighReal: currentInvestmentHigh * finalDiscountFactor,
+      finalNetWorthLowReal: ((currentInvestmentLow + currentHomeValueLow) - Math.max(0, currentPrincipal)) * finalDiscountFactor,
+      finalNetWorthMedReal: ((currentInvestmentMed + currentHomeValueMed) - Math.max(0, currentPrincipal)) * finalDiscountFactor,
+      finalNetWorthHighReal: ((currentInvestmentHigh + currentHomeValueHigh) - Math.max(0, currentPrincipal)) * finalDiscountFactor
     }
   };
 };

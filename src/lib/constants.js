@@ -24,7 +24,8 @@ export const defaultLoanConfig = {
   retirementWithdrawalRate: 4.0,
   retirementFixedWithdrawal: 60000,
   retirementGrowthRate: 5.0,
-  stopContributionsInRetirement: true
+  stopContributionsInRetirement: true,
+  estimatedInflationRate: 2.5
 };
 
 export const defaultExtraPayments = [
