@@ -13,7 +13,7 @@ import { formatCurrency, formatCurrencyCompact } from '../lib/formatters.js';
 
 export default function ChartSection({ scheduleData }) {
   return (
-    <div style={{ height: '500px' }} className="mb-5 border border-dark p-3 p-xl-4 bg-white">
+    <div style={{ height: 'clamp(340px, 55vh, 500px)' }} className="mb-5 border border-dark p-2 p-sm-3 p-xl-4 bg-white">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={scheduleData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" />

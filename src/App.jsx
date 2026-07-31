@@ -84,10 +84,7 @@ function MainContent() {
       />
 
       {/* Sticky Top Navigation Bar */}
-      <Navbar   
-          loanConfig={loanConfig}
-          handleConfigChange={handleConfigChange}
-          />
+      <Navbar />
 
       {/* Main Full-Width Content Area */}
       <main className="flex-grow-1 w-100 p-3 p-md-4 p-xl-5">
