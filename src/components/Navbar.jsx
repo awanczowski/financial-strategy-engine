@@ -59,8 +59,28 @@ export default function Navbar({ loanConfig: propLoanConfig, handleConfigChange:
               <span className="input-group-text bg-light text-dark fw-bold border-dark px-2">%</span>
             </div>
           </div>
+
+          {/* Share Scenario Button */}
+          <button
+            type="button"
+            className="btn btn-sm btn-outline-dark fw-bold scandi-label px-2 px-sm-3"
+            onClick={() => strategyCtx.setShowShareModal && strategyCtx.setShowShareModal(true)}
+          >
+            🔗 <span className="d-none d-sm-inline">Share Scenario</span><span className="d-sm-none">Share</span>
+          </button>
+
         </div>
       </div>
+
+      {/* Floating Toast Notification */}
+      {strategyCtx.toastMessage && (
+        <div 
+          className="position-fixed bottom-0 end-0 m-3 p-3 bg-dark text-white border border-white shadow-lg"
+          style={{ zIndex: 1060, fontSize: '0.85rem', fontWeight: 'bold' }}
+        >
+          {strategyCtx.toastMessage}
+        </div>
+      )}
     </header>
   );
 }

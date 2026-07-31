@@ -6,6 +6,7 @@ import ParameterPanel from './components/ParameterPanel.jsx';
 import ChartSection from './components/ChartSection.jsx';
 import AmortizationTable from './components/AmortizationTable.jsx';
 import MonteCarloModal from './components/MonteCarloModal.jsx';
+import ShareModal from './components/ShareModal.jsx';
 import { StrategyProvider } from './context/StrategyContext.jsx';
 import { useStrategy } from './context/useStrategy.js';
 
@@ -29,7 +30,12 @@ function MainContent() {
     setShowMonteCarloModal,
     isSimulating,
     monteCarloResults,
-    handleOpenMonteCarlo
+    handleOpenMonteCarlo,
+    showShareModal,
+    setShowShareModal,
+    loadScenario,
+    showToast,
+    viewMode
   } = useStrategy();
 
   return (
@@ -82,6 +88,19 @@ function MainContent() {
         results={monteCarloResults}
         loanConfig={loanConfig}
         onReRun={handleOpenMonteCarlo}
+      />
+
+      {/* Scenario Share & Import/Export Modal */}
+      <ShareModal 
+        show={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        loanConfig={loanConfig}
+        extraPayments={extraPayments}
+        investments={investments}
+        rateAdjustments={rateAdjustments}
+        viewMode={viewMode}
+        onLoadScenario={loadScenario}
+        onShowToast={showToast}
       />
 
       {/* Sticky Top Navigation Bar */}
