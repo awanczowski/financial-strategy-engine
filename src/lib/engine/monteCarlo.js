@@ -1,8 +1,9 @@
 import { getMonthOffset, randomNormal } from './math.js';
 
-export const runMonteCarloSimulation = (monthContributions, loanConfig) => {
-  const iterations = 1000;
-  const annualStdDev = 0.15; // 15% Volatility baseline
+export const runMonteCarloSimulation = (monthContributions, loanConfig, options = {}) => {
+  const iterations = Number(options.iterations || loanConfig.monteCarloIterations) || 1000;
+  const volatilityPct = Number(options.volatility !== undefined ? options.volatility : loanConfig.monteCarloVolatility) || 15;
+  const annualStdDev = volatilityPct / 100;
   const monthlyStdDev = annualStdDev / Math.sqrt(12);
   const inflationRateAnnual = (Number(loanConfig.estimatedInflationRate) || 0) / 100;
   
@@ -12,7 +13,7 @@ export const runMonteCarloSimulation = (monthContributions, loanConfig) => {
 
   const totalYears = Math.floor(monthContributions.length / 12);
 
-  const runSimulationForRate = (accumRate, trackPaths = false) => {
+  const runSimulationForRate = (accumRate, trackPaths = true) => {
     let successCount = 0;
     let finalPorts = [];
     let yearlyPaths = [];
@@ -88,33 +89,56 @@ export const runMonteCarloSimulation = (monthContributions, loanConfig) => {
 
     finalPorts.sort((a, b) => a - b);
     
+    // Calculate final metrics (Nominal and Real $ Today)
+    const finalDiscountFactor = Math.pow(1 + inflationRateAnnual, totalYears);
+    const finalPortsReal = finalPorts.map(v => v / finalDiscountFactor);
+
     let chartData = [];
     if (trackPaths) {
       for (let y = 0; y < totalYears; y++) {
-        let yearData = Array.from(yearlyPaths[y]).sort((a, b) => a - b);
+        let yearDataNominal = Array.from(yearlyPaths[y]).sort((a, b) => a - b);
+        let discountFactor = Math.pow(1 + inflationRateAnnual, y + 1);
+        let yearDataReal = yearDataNominal.map(v => v / discountFactor);
+
         chartData.push({
           year: y + 1,
-          p10: yearData[Math.floor(iterations * 0.10)],
-          p50: yearData[Math.floor(iterations * 0.50)],
-          p90: yearData[Math.floor(iterations * 0.90)]
+          p10: yearDataNominal[Math.floor(iterations * 0.10)],
+          p25: yearDataNominal[Math.floor(iterations * 0.25)],
+          p50: yearDataNominal[Math.floor(iterations * 0.50)],
+          p75: yearDataNominal[Math.floor(iterations * 0.75)],
+          p90: yearDataNominal[Math.floor(iterations * 0.90)],
+
+          p10Real: yearDataReal[Math.floor(iterations * 0.10)],
+          p25Real: yearDataReal[Math.floor(iterations * 0.25)],
+          p50Real: yearDataReal[Math.floor(iterations * 0.50)],
+          p75Real: yearDataReal[Math.floor(iterations * 0.75)],
+          p90Real: yearDataReal[Math.floor(iterations * 0.90)]
         });
       }
     }
 
     return {
       successRate: (successCount / iterations) * 100,
+      p10: finalPorts[Math.floor(iterations * 0.10)],
       median: finalPorts[Math.floor(iterations * 0.50)],
+      p90: finalPorts[Math.floor(iterations * 0.90)],
+      p10Real: finalPortsReal[Math.floor(iterations * 0.10)],
+      medianReal: finalPortsReal[Math.floor(iterations * 0.50)],
+      p90Real: finalPortsReal[Math.floor(iterations * 0.90)],
       chartData
     };
   };
 
-  const lowRes = runSimulationForRate(loanConfig.investRateLow, false);
+  const lowRes = runSimulationForRate(loanConfig.investRateLow, true);
   const medRes = runSimulationForRate(loanConfig.investRateMed, true); 
-  const highRes = runSimulationForRate(loanConfig.investRateHigh, false);
+  const highRes = runSimulationForRate(loanConfig.investRateHigh, true);
 
   return {
+    volatility: volatilityPct,
+    iterations: iterations,
     low: lowRes,
     med: medRes,
     high: highRes
   };
 };
+
