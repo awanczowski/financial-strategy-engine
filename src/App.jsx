@@ -100,7 +100,7 @@ const RateAdjustmentRow = ({ item, onUpdate, onRemove }) => (
 );
 
 // Constants
-const ACTIVE_SESSION_KEY = 'financialEngine_activeSession_v11';
+const ACTIVE_SESSION_KEY = 'financialEngine_activeSession_v12';
 const defaultStartDate = "2026-08-01";
 const defaultRetirementDate = "2051-08-01";
 
@@ -828,12 +828,31 @@ export default function App() {
           <div className="card-body p-4 p-xl-5">
             <div className="row g-0">
               
-              {/* === LEFT COLUMN: MORTGAGE & DEBT === */}
+              {/* === LEFT COLUMN: REAL ESTATE & MORTGAGE === */}
               <div className="col-lg-6 border-lg-end pe-lg-5 mb-5 mb-lg-0">
-                <h5 className="scandi-label text-black mb-4 border-bottom border-dark pb-2 fs-6">Mortgage & Debt</h5>
+                <h5 className="scandi-label text-black mb-4 border-bottom border-dark pb-2 fs-6">Real Estate & Mortgage</h5>
                 
-                {/* 1. Base Loan */}
-                <h6 className="scandi-label text-muted mb-3">Initial Configuration</h6>
+                {/* 1. Real Estate */}
+                <h6 className="scandi-label text-muted mb-3">Property Details</h6>
+                <div className="row g-3 align-items-end mb-4">
+                  <div className="col-sm-6 col-md-6">
+                    <label className="form-label scandi-label">Initial Home Value ($)</label>
+                    <input name="initialHomeValue" type="number" className="form-control scandi-input border-dark" value={loanConfig.initialHomeValue} onChange={handleConfigChange} />
+                  </div>
+                  <div className="col-sm-12 col-md-12">
+                    <label className="form-label scandi-label">Appreciation (L / M / H %)</label>
+                    <div className="input-group">
+                      <input name="homeGrowthRateLow" type="number" step="0.1" className="form-control scandi-input border-dark px-1 text-center" value={loanConfig.homeGrowthRateLow} onChange={handleConfigChange} />
+                      <span className="input-group-text bg-light text-dark fw-bold border-dark border-start-0 border-end-0">/</span>
+                      <input name="homeGrowthRateMed" type="number" step="0.1" className="form-control scandi-input border-dark px-1 text-center" value={loanConfig.homeGrowthRateMed} onChange={handleConfigChange} />
+                      <span className="input-group-text bg-light text-dark fw-bold border-dark border-start-0 border-end-0">/</span>
+                      <input name="homeGrowthRateHigh" type="number" step="0.1" className="form-control scandi-input border-dark px-1 text-center" value={loanConfig.homeGrowthRateHigh} onChange={handleConfigChange} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Base Loan */}
+                <h6 className="scandi-label text-muted mb-3 border-top border-light pt-4">Loan Configuration</h6>
                 <div className="row g-3 align-items-end mb-4">
                   <div className="col-sm-6 col-md-6">
                     <label className="form-label scandi-label">Loan Start Date</label>
@@ -868,7 +887,7 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* 2. ARM Adjustments */}
+                {/* 3. ARM Adjustments */}
                 <h6 className="scandi-label text-muted mb-3 border-top border-light pt-4">ARM Adjustments (Rate Changes)</h6>
                 <div className="mb-4">
                   {rateAdjustments.length === 0 && <div className="text-muted small fst-italic mb-3">No rate changes scheduled.</div>}
@@ -883,7 +902,7 @@ export default function App() {
                   <button className="btn btn-sm btn-outline-dark fw-bold mt-2 w-100" onClick={() => addStrategy(setRateAdjustments, { rate: 7.0, startDate: "2031-08-01" })}>+ Add Rate Change</button>
                 </div>
 
-                {/* 3. Extra Payments */}
+                {/* 4. Extra Payments */}
                 <h6 className="scandi-label text-muted mb-3 border-top border-light pt-4">Extra Mortgage Payments</h6>
                 <div className="mb-2">
                   {extraPayments.length === 0 && <div className="text-muted small fst-italic mb-3">No extra payments scheduled.</div>}
@@ -904,27 +923,8 @@ export default function App() {
               <div className="col-lg-6 ps-lg-5">
                 <h5 className="scandi-label text-black mb-4 border-bottom border-dark pb-2 fs-6">Wealth & Investing</h5>
                 
-                {/* 1. Real Estate */}
-                <h6 className="scandi-label text-muted mb-3">Real Estate</h6>
-                <div className="row g-3 align-items-end mb-4">
-                  <div className="col-sm-6 col-md-6">
-                    <label className="form-label scandi-label">Initial Home Value ($)</label>
-                    <input name="initialHomeValue" type="number" className="form-control scandi-input border-dark" value={loanConfig.initialHomeValue} onChange={handleConfigChange} />
-                  </div>
-                  <div className="col-sm-12 col-md-12">
-                    <label className="form-label scandi-label">Appreciation (L / M / H %)</label>
-                    <div className="input-group">
-                      <input name="homeGrowthRateLow" type="number" step="0.1" className="form-control scandi-input border-dark px-1 text-center" value={loanConfig.homeGrowthRateLow} onChange={handleConfigChange} />
-                      <span className="input-group-text bg-light text-dark fw-bold border-dark border-start-0 border-end-0">/</span>
-                      <input name="homeGrowthRateMed" type="number" step="0.1" className="form-control scandi-input border-dark px-1 text-center" value={loanConfig.homeGrowthRateMed} onChange={handleConfigChange} />
-                      <span className="input-group-text bg-light text-dark fw-bold border-dark border-start-0 border-end-0">/</span>
-                      <input name="homeGrowthRateHigh" type="number" step="0.1" className="form-control scandi-input border-dark px-1 text-center" value={loanConfig.homeGrowthRateHigh} onChange={handleConfigChange} />
-                    </div>
-                  </div>
-                </div>
-
-                {/* 2. Portfolio Base */}
-                <h6 className="scandi-label text-muted mb-3 border-top border-light pt-4">Portfolio Base</h6>
+                {/* 1. Portfolio Base */}
+                <h6 className="scandi-label text-muted mb-3">Portfolio Base</h6>
                 <div className="row g-3 align-items-end mb-4">
                   <div className="col-sm-6 col-md-6">
                     <label className="form-label scandi-label text-black fw-bolder border-bottom border-dark pb-1">Sim Term (Yrs)</label>
@@ -946,7 +946,7 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* 3. Ongoing Contributions */}
+                {/* 2. Ongoing Contributions */}
                 <h6 className="scandi-label text-muted mb-3 border-top border-light pt-4">Ongoing Contributions</h6>
                 <div className="mb-4">
                   {investments.length === 0 && <div className="text-muted small fst-italic mb-3">No direct investments scheduled.</div>}
@@ -975,7 +975,7 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* 4. Retirement Phase */}
+                {/* 3. Retirement Phase */}
                 <h6 className="scandi-label text-muted mb-3 border-top border-light pt-4">Retirement Phase</h6>
                 <div className="mb-2">
                   <div className="d-flex align-items-center gap-3 mb-3">
