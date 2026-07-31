@@ -29,6 +29,7 @@ export function StrategyProvider({ children }) {
   const [extraPayments, setExtraPayments] = useState(activeSession?.extraPayments || defaultExtraPayments);
   const [investments, setInvestments] = useState(activeSession?.investments || defaultInvestments);
   const [rateAdjustments, setRateAdjustments] = useState(activeSession?.rateAdjustments || []);
+  const [viewMode, setViewMode] = useState(activeSession?.viewMode || 'nominal'); // 'nominal' | 'real'
 
   // Monte Carlo State
   const [showMonteCarloModal, setShowMonteCarloModal] = useState(false);
@@ -40,10 +41,11 @@ export function StrategyProvider({ children }) {
       loanConfig,
       extraPayments,
       investments,
-      rateAdjustments
+      rateAdjustments,
+      viewMode
     };
     localStorage.setItem(ACTIVE_SESSION_KEY, JSON.stringify(sessionData));
-  }, [loanConfig, extraPayments, investments, rateAdjustments]);
+  }, [loanConfig, extraPayments, investments, rateAdjustments, viewMode]);
 
   const handleConfigChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -86,6 +88,49 @@ export function StrategyProvider({ children }) {
     return runSimulationEngine(loanConfig, extraPayments, investments, rateAdjustments);
   }, [loanConfig, extraPayments, investments, rateAdjustments]);
 
+  // Derived active summary and schedule data based on viewMode ('nominal' vs 'real')
+  const activeSummary = useMemo(() => {
+    if (viewMode === 'real') {
+      return {
+        ...summary,
+        totalInterestPaid: summary.totalInterestPaidReal,
+        totalInvestContributed: summary.totalInvestContributedReal,
+        totalWithdrawnOverall: summary.totalWithdrawnOverallReal,
+        finalHomeLow: summary.finalHomeLowReal,
+        finalHomeMed: summary.finalHomeMedReal,
+        finalHomeHigh: summary.finalHomeHighReal,
+        finalInvLow: summary.finalInvLowReal,
+        finalInvMed: summary.finalInvMedReal,
+        finalInvHigh: summary.finalInvHighReal,
+        finalNetWorthLow: summary.finalNetWorthLowReal,
+        finalNetWorthMed: summary.finalNetWorthMedReal,
+        finalNetWorthHigh: summary.finalNetWorthHighReal
+      };
+    }
+    return summary;
+  }, [summary, viewMode]);
+
+  const activeScheduleData = useMemo(() => {
+    if (viewMode === 'real') {
+      return scheduleData.map(row => ({
+        ...row,
+        mortgageBalance: row.mortgageBalanceReal,
+        homeMed: row.homeMedReal,
+        invLow: row.invLowReal,
+        invMed: row.invMedReal,
+        invHigh: row.invHighReal,
+        netWorthLow: row.netWorthLowReal,
+        netWorthMed: row.netWorthMedReal,
+        netWorthHigh: row.netWorthHighReal,
+        mortgagePaid: row.mortgagePaidReal,
+        interestPaid: row.interestPaidReal,
+        investContributed: row.investContributedReal,
+        withdrawn: row.withdrawnReal
+      }));
+    }
+    return scheduleData;
+  }, [scheduleData, viewMode]);
+
   // Monte Carlo Execution Engine
   const handleOpenMonteCarlo = () => {
     setShowMonteCarloModal(true);
@@ -108,12 +153,16 @@ export function StrategyProvider({ children }) {
     setInvestments,
     rateAdjustments,
     setRateAdjustments,
+    viewMode,
+    setViewMode,
     handleConfigChange,
     addStrategy,
     removeStrategy,
     updateStrategy,
     scheduleData,
+    activeScheduleData,
     summary,
+    activeSummary,
     initialBreakdown,
     monthContributions,
     showMonteCarloModal,

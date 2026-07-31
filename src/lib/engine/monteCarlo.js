@@ -4,6 +4,7 @@ export const runMonteCarloSimulation = (monthContributions, loanConfig) => {
   const iterations = 1000;
   const annualStdDev = 0.15; // 15% Volatility baseline
   const monthlyStdDev = annualStdDev / Math.sqrt(12);
+  const inflationRateAnnual = (Number(loanConfig.estimatedInflationRate) || 0) / 100;
   
   const retirementStartMonth = loanConfig.enableRetirement 
     ? getMonthOffset(loanConfig.loanStartDate, loanConfig.retirementDate) 
@@ -27,7 +28,7 @@ export const runMonteCarloSimulation = (monthContributions, loanConfig) => {
     const isPercentDynamic = loanConfig.withdrawalType === 'percent_dynamic';
     
     const pullRateAnnual = loanConfig.enableRetirement && (isPercentFixed || isPercentDynamic) ? (Number(loanConfig.retirementWithdrawalRate) || 0) / 100 : 0;
-    const fixedMonthlyInput = isFixed ? (Number(loanConfig.retirementFixedWithdrawal) || 0) / 12 : 0;
+    const baseFixedMonthlyInput = isFixed ? (Number(loanConfig.retirementFixedWithdrawal) || 0) / 12 : 0;
     
     const retMean = (Number(loanConfig.retirementGrowthRate) || 0) / 100;
     const accumMean = (Number(accumRate) || 0) / 100;
@@ -36,13 +37,24 @@ export const runMonteCarloSimulation = (monthContributions, loanConfig) => {
       let port = Number(loanConfig.initialInvestment) || 0;
       let failed = false;
       let lockedWithdrawal = null;
+      let currentFixedMonthly = baseFixedMonthlyInput;
       
       for (let m = 0; m < monthContributions.length; m++) {
-        const isRetired = (m + 1) >= retirementStartMonth;
+        const monthNum = m + 1;
+        const isRetired = monthNum >= retirementStartMonth;
 
         // Lock the withdrawal amount on the very first month of retirement if percent_fixed
         if (isRetired && lockedWithdrawal === null && isPercentFixed) {
           lockedWithdrawal = (port * pullRateAnnual) / 12;
+        }
+
+        // Annual COLA escalation for fixed/locked withdrawals
+        if (isRetired) {
+          const monthsInRetirement = monthNum - retirementStartMonth;
+          if (monthsInRetirement > 0 && monthsInRetirement % 12 === 0) {
+            currentFixedMonthly *= (1 + inflationRateAnnual);
+            if (lockedWithdrawal !== null) lockedWithdrawal *= (1 + inflationRateAnnual);
+          }
         }
 
         if (!failed) {
@@ -52,7 +64,7 @@ export const runMonteCarloSimulation = (monthContributions, loanConfig) => {
           
           let withdrawal = 0;
           if (isRetired) {
-            if (isFixed) withdrawal = fixedMonthlyInput;
+            if (isFixed) withdrawal = currentFixedMonthly;
             else if (isPercentFixed) withdrawal = lockedWithdrawal;
             else if (isPercentDynamic) withdrawal = (port * pullRateAnnual) / 12;
           }
@@ -66,7 +78,7 @@ export const runMonteCarloSimulation = (monthContributions, loanConfig) => {
           }
         }
 
-        if ((m + 1) % 12 === 0 && trackPaths) {
+        if (monthNum % 12 === 0 && trackPaths) {
           yearlyPaths[Math.floor(m / 12)][i] = port;
         }
       }

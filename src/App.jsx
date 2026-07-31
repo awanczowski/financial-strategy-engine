@@ -22,8 +22,8 @@ function MainContent() {
     addStrategy,
     removeStrategy,
     updateStrategy,
-    scheduleData,
-    summary,
+    activeScheduleData,
+    activeSummary,
     initialBreakdown,
     showMonteCarloModal,
     setShowMonteCarloModal,
@@ -90,7 +90,7 @@ function MainContent() {
       <main className="flex-grow-1 w-100 p-3 p-md-4 p-xl-5">
         
         {/* Lined Up Summary Dashboard */}
-        <DashboardCards initialBreakdown={initialBreakdown} summary={summary} />
+        <DashboardCards initialBreakdown={initialBreakdown} summary={activeSummary} />
 
         {/* Strategy Engine Controls */}
         <ParameterPanel 
@@ -109,10 +109,10 @@ function MainContent() {
         />
 
         {/* Chart Visualization */}
-        <ChartSection scheduleData={scheduleData} />
+        <ChartSection scheduleData={activeScheduleData} />
 
         {/* Amortization Table */}
-        <AmortizationTable scheduleData={scheduleData} />
+        <AmortizationTable scheduleData={activeScheduleData} />
 
         {/* Legal Disclaimer */}
         <footer className="mt-5 pt-4 border-top border-dark text-muted small" style={{ lineHeight: '1.6' }}>
