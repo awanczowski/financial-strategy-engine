@@ -32,11 +32,11 @@ const formatCurrencyCompact = (val) => {
 
 // Extracted UI Components
 const StrategyRow = ({ item, onUpdate, onRemove }) => (
-  <div className="d-flex gap-2 mb-2 align-items-center flex-wrap flex-md-nowrap">
-    <div className="input-group input-group-sm flex-fill" style={{ minWidth: '110px' }}>
+  <div className="d-flex gap-2 mb-2 align-items-center flex-wrap flex-sm-nowrap">
+    <div className="input-group input-group-sm flex-fill" style={{ minWidth: '100px' }}>
       <span className="input-group-text bg-white text-dark fw-bold border-dark">$</span>
       <input 
-        className="form-control bg-white text-dark border-dark scandi-input" 
+        className="form-control bg-white text-dark border-dark scandi-input px-1" 
         type="number" 
         value={item.amount} 
         onChange={(e) => onUpdate(item.id, 'amount', e.target.value)} 
@@ -45,6 +45,7 @@ const StrategyRow = ({ item, onUpdate, onRemove }) => (
     </div>
     <select 
       className="form-select form-select-sm bg-white text-dark border-dark scandi-input flex-fill" 
+      style={{ minWidth: '100px' }}
       value={item.frequency} 
       onChange={(e) => onUpdate(item.id, 'frequency', e.target.value)}
     >
@@ -53,7 +54,7 @@ const StrategyRow = ({ item, onUpdate, onRemove }) => (
       <option value={6}>Semi-Annual</option>
       <option value={12}>Yearly</option>
     </select>
-    <div className="input-group input-group-sm flex-fill" style={{ minWidth: '140px' }}>
+    <div className="input-group input-group-sm flex-fill" style={{ minWidth: '130px' }}>
       <input 
         className="form-control bg-white text-dark border-dark scandi-input px-1" 
         type="date" 
@@ -66,10 +67,10 @@ const StrategyRow = ({ item, onUpdate, onRemove }) => (
 );
 
 const RateAdjustmentRow = ({ item, onUpdate, onRemove }) => (
-  <div className="d-flex gap-2 mb-2 align-items-center flex-wrap flex-md-nowrap">
+  <div className="d-flex gap-2 mb-2 align-items-center flex-wrap flex-sm-nowrap">
     <div className="input-group input-group-sm flex-fill" style={{ minWidth: '100px' }}>
       <input 
-        className="form-control bg-white text-dark border-dark scandi-input" 
+        className="form-control bg-white text-dark border-dark scandi-input px-1" 
         type="number" 
         step="0.1" 
         value={item.rate} 
@@ -77,7 +78,7 @@ const RateAdjustmentRow = ({ item, onUpdate, onRemove }) => (
       />
       <span className="input-group-text bg-white text-dark fw-bold border-dark">%</span>
     </div>
-    <div className="input-group input-group-sm flex-fill" style={{ minWidth: '140px' }}>
+    <div className="input-group input-group-sm flex-fill" style={{ minWidth: '130px' }}>
       <input 
         className="form-control bg-white text-dark border-dark scandi-input px-1" 
         type="date" 
@@ -90,14 +91,15 @@ const RateAdjustmentRow = ({ item, onUpdate, onRemove }) => (
 );
 
 // Constants
-const ACTIVE_SESSION_KEY = 'financialEngine_activeSession';
+const ACTIVE_SESSION_KEY = 'financialEngine_activeSession_v8';
 const defaultStartDate = "2026-08-01";
+const defaultRetirementDate = "2051-08-01";
 
 const defaultLoanConfig = {
   principal: 400000,
   mortgageRate: 6.5, 
   years: 30,           
-  simulationYears: 25, 
+  simulationYears: 35, 
   initialInvestment: 0,
   investRateLow: 5.0,
   investRateMed: 8.0,
@@ -108,13 +110,18 @@ const defaultLoanConfig = {
   homeGrowthRateHigh: 5.0,
   divertAfterPayoff: true,
   isBiweekly: false,
-  loanStartDate: defaultStartDate
+  loanStartDate: defaultStartDate,
+  enableRetirement: false,
+  retirementDate: defaultRetirementDate,
+  retirementWithdrawalRate: 4.0,
+  retirementGrowthRate: 5.0,
+  stopContributionsInRetirement: true
 };
 
 const defaultExtraPayments = [{ id: 1, amount: 500, frequency: 1, startDate: defaultStartDate }];
 const defaultInvestments = [{ id: 1, amount: 500, frequency: 1, startDate: defaultStartDate }];
 
-// Local Storage Helper for Active Session Initialization
+// Local Storage Helper
 const loadActiveSession = () => {
   const saved = localStorage.getItem(ACTIVE_SESSION_KEY);
   if (saved) {
@@ -128,7 +135,6 @@ const loadActiveSession = () => {
 };
 
 export default function App() {
-  // Load initial state from Local Storage or fallback to defaults
   const activeSession = loadActiveSession();
 
   const [loanConfig, setLoanConfig] = useState(activeSession?.loanConfig || defaultLoanConfig);
@@ -136,7 +142,6 @@ export default function App() {
   const [investments, setInvestments] = useState(activeSession?.investments || defaultInvestments);
   const [rateAdjustments, setRateAdjustments] = useState(activeSession?.rateAdjustments || []);
 
-  // Auto-Save Active Session on any parameter change
   useEffect(() => {
     const sessionData = {
       loanConfig,
@@ -192,6 +197,7 @@ export default function App() {
     const simulationMonths = (Number(loanConfig.simulationYears) || 0) * 12;
     const isBiweekly = loanConfig.isBiweekly;
     const baseDate = loanConfig.loanStartDate;
+    const retirementStartMonth = loanConfig.enableRetirement ? getMonthOffset(baseDate, loanConfig.retirementDate) : Infinity;
     
     const activeExtra = extraPayments.map(p => ({ ...p, startMonth: getMonthOffset(baseDate, p.startDate) }));
     const activeInvestments = investments.map(p => ({ ...p, startMonth: getMonthOffset(baseDate, p.startDate) }));
@@ -221,13 +227,17 @@ export default function App() {
     let yearMortgagePaid = 0;
     let yearInterestPaid = 0;
     let yearInvestContributed = 0;
+    let yearWithdrawn = 0;
 
     let totalInterestPaid = 0;
     let totalInvestContributed = 0;
+    let totalWithdrawnOverall = 0;
     let payoffMonth = null;
     let firstMonthBreakdown = null;
 
     for (let month = 1; month <= simulationMonths; month++) {
+      const isRetired = month >= retirementStartMonth;
+
       const adjustmentThisMonth = activeRates.find(adj => adj.startMonth === month);
       if (adjustmentThisMonth && currentPrincipal > 0) {
         currentAnnualRate = Number(adjustmentThisMonth.rate) || 0;
@@ -296,10 +306,25 @@ export default function App() {
         }
       }
 
-      // Asset Compounding
-      currentInvestmentLow += currentInvestmentLow * monthlyInvestRateLow + investContributionThisMonth;
-      currentInvestmentMed += currentInvestmentMed * monthlyInvestRateMed + investContributionThisMonth;
-      currentInvestmentHigh += currentInvestmentHigh * monthlyInvestRateHigh + investContributionThisMonth;
+      if (isRetired && loanConfig.stopContributionsInRetirement) {
+        investContributionThisMonth = 0;
+      }
+
+      let yieldLow = isRetired ? ((Number(loanConfig.retirementGrowthRate) || 0) / 100) / 12 : monthlyInvestRateLow;
+      let yieldMed = isRetired ? ((Number(loanConfig.retirementGrowthRate) || 0) / 100) / 12 : monthlyInvestRateMed;
+      let yieldHigh = isRetired ? ((Number(loanConfig.retirementGrowthRate) || 0) / 100) / 12 : monthlyInvestRateHigh;
+
+      let withdrawalLow = 0, withdrawalMed = 0, withdrawalHigh = 0;
+      if (isRetired) {
+        const pullRate = ((Number(loanConfig.retirementWithdrawalRate) || 0) / 100) / 12;
+        withdrawalLow = currentInvestmentLow * pullRate;
+        withdrawalMed = currentInvestmentMed * pullRate;
+        withdrawalHigh = currentInvestmentHigh * pullRate;
+      }
+
+      currentInvestmentLow = Math.max(0, currentInvestmentLow + (currentInvestmentLow * yieldLow) + investContributionThisMonth - withdrawalLow);
+      currentInvestmentMed = Math.max(0, currentInvestmentMed + (currentInvestmentMed * yieldMed) + investContributionThisMonth - withdrawalMed);
+      currentInvestmentHigh = Math.max(0, currentInvestmentHigh + (currentInvestmentHigh * yieldHigh) + investContributionThisMonth - withdrawalHigh);
       
       currentHomeValueLow += currentHomeValueLow * monthlyHomeGrowthLow;
       currentHomeValueMed += currentHomeValueMed * monthlyHomeGrowthMed;
@@ -307,6 +332,9 @@ export default function App() {
 
       yearInvestContributed += investContributionThisMonth;
       totalInvestContributed += investContributionThisMonth;
+      
+      yearWithdrawn += withdrawalMed;
+      totalWithdrawnOverall += withdrawalMed;
 
       if (month % 12 === 0) {
         yearlyData.push({
@@ -322,16 +350,16 @@ export default function App() {
           mortgagePaid: yearMortgagePaid,
           interestPaid: yearInterestPaid,
           investContributed: yearInvestContributed,
+          withdrawn: yearWithdrawn,
           activeRate: currentAnnualRate 
         });
         
         yearMortgagePaid = 0;
         yearInterestPaid = 0;
         yearInvestContributed = 0;
+        yearWithdrawn = 0;
       }
     }
-
-    const initialInv = Number(loanConfig.initialInvestment) || 0;
 
     return {
       scheduleData: yearlyData,
@@ -339,6 +367,7 @@ export default function App() {
       summary: {
         totalInterestPaid,
         totalInvestContributed,
+        totalWithdrawnOverall,
         payoffString: payoffMonth 
           ? `Yr ${Math.ceil(payoffMonth / 12)}, Mo ${payoffMonth % 12 === 0 ? 12 : payoffMonth % 12}` 
           : "Not paid off",
@@ -350,10 +379,7 @@ export default function App() {
         finalInvHigh: currentInvestmentHigh,
         finalNetWorthLow: (currentInvestmentLow + currentHomeValueLow) - Math.max(0, currentPrincipal),
         finalNetWorthMed: (currentInvestmentMed + currentHomeValueMed) - Math.max(0, currentPrincipal),
-        finalNetWorthHigh: (currentInvestmentHigh + currentHomeValueHigh) - Math.max(0, currentPrincipal),
-        growthLow: currentInvestmentLow - totalInvestContributed - initialInv,
-        growthMed: currentInvestmentMed - totalInvestContributed - initialInv,
-        growthHigh: currentInvestmentHigh - totalInvestContributed - initialInv
+        finalNetWorthHigh: (currentInvestmentHigh + currentHomeValueHigh) - Math.max(0, currentPrincipal)
       }
     };
   }, [loanConfig, extraPayments, investments, rateAdjustments]);
@@ -364,7 +390,7 @@ export default function App() {
       style={{ 
         width: '100vw', 
         overflowX: 'hidden', 
-        backgroundColor: '#fff',
+        backgroundColor: '#f9f9f9',
         fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" 
       }}
     >
@@ -376,7 +402,7 @@ export default function App() {
         .btn-outline-dark:hover { background-color: #000; color: #fff; }
 
         .dashboard-card { border: 1px solid #000 !important; transition: transform 0.2s ease; }
-        .dashboard-card:hover { transform: translateY(-4px); background-color: #f9f9f9 !important; }
+        .dashboard-card:hover { transform: translateY(-4px); }
 
         .scandi-checkbox {
           appearance: none; width: 24px; height: 24px; border: 1px solid #000; background-color: #fff; 
@@ -394,24 +420,29 @@ export default function App() {
 
         .scandi-header { font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; }
         .scandi-label { font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; font-size: 0.75rem; }
+
+        /* Clean Custom Grid Divider */
+        @media (min-width: 992px) {
+          .border-lg-end { border-right: 1px solid #e5e5e5 !important; }
+        }
       `}</style>
 
       {/* Sticky Top Navigation Bar */}
       <header className="w-100 border-bottom border-dark bg-white px-4 py-3" style={{ position: 'sticky', top: 0, zIndex: 1030 }}>
-        <h1 className="h4 mb-0 scandi-header text-black">Strategy Engine</h1>
+        <div className="d-flex justify-content-between align-items-center max-w-100 mx-auto">
+          <h1 className="h4 mb-0 scandi-header text-black">Strategy Engine</h1>
+        </div>
       </header>
 
       {/* Main Full-Width Content Area */}
-      <main className="flex-grow-1 w-100 p-4 p-xl-5">
+      <main className="flex-grow-1 w-100 p-3 p-md-4 p-xl-5">
         
         {/* Lined Up Summary Dashboard */}
         <div className="row g-4 mb-4">
-          
-          {/* Row 1: Payment Breakdown & Debt */}
           {initialBreakdown && (
             <div className="col-lg-6">
               <div className="card dashboard-card bg-white h-100">
-                <div className="card-body d-flex flex-column justify-content-between p-3 p-xl-4">
+                <div className="card-body d-flex flex-column justify-content-between p-4">
                   <h6 className="card-subtitle mb-4 scandi-label text-muted border-bottom border-dark pb-2">Base Payment Breakdown ({initialBreakdown.frequency})</h6>
                   <div className="d-flex justify-content-between mb-2 align-items-center">
                     <span className="text-black small fw-bold text-uppercase">Total Payment</span>
@@ -438,8 +469,8 @@ export default function App() {
 
           <div className="col-lg-6">
             <div className="card dashboard-card bg-white h-100">
-              <div className="card-body d-flex flex-column justify-content-between p-3 p-xl-4">
-                <h6 className="card-subtitle mb-4 scandi-label text-muted border-bottom border-dark pb-2">Debt & Contributions</h6>
+              <div className="card-body d-flex flex-column justify-content-between p-4">
+                <h6 className="card-subtitle mb-4 scandi-label text-muted border-bottom border-dark pb-2">Cash Flow & Debt</h6>
                 <div className="d-flex justify-content-between mb-2 align-items-center">
                   <span className="text-black small fw-bold text-uppercase">Payoff Date</span>
                   <span className="text-black fw-bolder fs-4">{summary.payoffString}</span>
@@ -448,21 +479,23 @@ export default function App() {
                   <span className="text-muted small fw-bold text-uppercase">Total Interest</span>
                   <span className="text-danger fw-bold">{formatCurrency(summary.totalInterestPaid)}</span>
                 </div>
-                <div className="d-flex justify-content-between">
+                <div className="d-flex justify-content-between mb-2">
                   <span className="text-muted small fw-bold text-uppercase">Total Invested</span>
-                  <span className="text-muted fw-bold">{formatCurrency(summary.totalInvestContributed)}</span>
+                  <span className="text-black fw-bold">{formatCurrency(summary.totalInvestContributed)}</span>
+                </div>
+                <div className="d-flex justify-content-between">
+                  <span className="text-muted small fw-bold text-uppercase">Total Withdrawn</span>
+                  <span className="text-success fw-bold">{formatCurrency(summary.totalWithdrawnOverall)}</span>
                 </div>
               </div>
             </div>
           </div>
-
         </div>
 
         <div className="row g-4 mb-5">
-          {/* Row 2: Wealth Projections */}
           <div className="col-md-4">
             <div className="card dashboard-card bg-white h-100">
-              <div className="card-body d-flex flex-column justify-content-between p-3 p-xl-4">
+              <div className="card-body d-flex flex-column justify-content-between p-4">
                 <h6 className="card-subtitle mb-4 scandi-label text-muted border-bottom border-dark pb-2">Final Home Value</h6>
                 <div className="d-flex justify-content-between mb-2">
                   <span className="text-muted small fw-bold">Low</span>
@@ -482,7 +515,7 @@ export default function App() {
 
           <div className="col-md-4">
             <div className="card dashboard-card bg-white h-100">
-              <div className="card-body d-flex flex-column justify-content-between p-3 p-xl-4">
+              <div className="card-body d-flex flex-column justify-content-between p-4">
                 <h6 className="card-subtitle mb-4 scandi-label text-muted border-bottom border-dark pb-2">Final Portfolio</h6>
                 <div className="d-flex justify-content-between mb-2">
                   <span className="text-muted small fw-bold">Low</span>
@@ -502,7 +535,7 @@ export default function App() {
 
           <div className="col-md-4">
             <div className="card dashboard-card bg-white h-100">
-              <div className="card-body d-flex flex-column justify-content-between p-3 p-xl-4 bg-light">
+              <div className="card-body d-flex flex-column justify-content-between p-4 bg-light">
                 <h6 className="card-subtitle mb-4 scandi-label text-black border-bottom border-dark pb-2">Final Net Worth</h6>
                 <div className="d-flex justify-content-between mb-2">
                   <span className="text-muted small fw-bold">Low</span>
@@ -521,38 +554,41 @@ export default function App() {
           </div>
         </div>
 
-        {/* Configuration Parameters */}
-        <div className="card bg-white border-dark mb-5 border-2">
-          <div className="card-header border-dark bg-transparent p-3 p-xl-4">
-            <h5 className="mb-0 scandi-header text-black">Core Parameters</h5>
+        {/* =========================================
+            THE CONFIGURATION ENGINE (2 COLUMNS)
+        ========================================= */}
+        <div className="card bg-white border-dark mb-5 border-2 shadow-sm">
+          <div className="card-header border-dark bg-transparent p-4">
+            <h5 className="mb-0 scandi-header text-black">Strategy Engine Controls</h5>
           </div>
-          <div className="card-body p-3 p-xl-4">
-            
-            {/* MORTGAGE SECTION - SPLIT INTO TWO COLUMNS */}
-            <h6 className="scandi-label text-muted mb-4 border-bottom border-dark pb-2">Mortgage Details</h6>
-            <div className="row g-5 mb-5">
+          
+          <div className="card-body p-4 p-xl-5">
+            <div className="row g-0">
               
-              {/* Column 1: Initial Configuration */}
-              <div className="col-lg-6 position-relative">
-                <h6 className="scandi-label text-black mb-3">Initial Configuration</h6>
-                <div className="row g-3 align-items-end">
-                  <div className="col-sm-6">
+              {/* === LEFT COLUMN: MORTGAGE & DEBT === */}
+              <div className="col-lg-6 border-lg-end pe-lg-5 mb-5 mb-lg-0">
+                <h5 className="scandi-label text-black mb-4 border-bottom border-dark pb-2 fs-6">Mortgage & Debt</h5>
+                
+                {/* 1. Base Loan */}
+                <h6 className="scandi-label text-muted mb-3">Initial Configuration</h6>
+                <div className="row g-3 align-items-end mb-4">
+                  <div className="col-sm-6 col-md-6">
                     <label className="form-label scandi-label">Loan Start Date</label>
                     <input name="loanStartDate" type="date" className="form-control scandi-input border-dark" value={loanConfig.loanStartDate} onChange={handleConfigChange} />
                   </div>
-                  <div className="col-sm-6">
+                  <div className="col-sm-6 col-md-6">
                     <label className="form-label scandi-label">Principal ($)</label>
                     <input name="principal" type="number" className="form-control scandi-input border-dark" value={loanConfig.principal} onChange={handleConfigChange} />
                   </div>
-                  <div className="col-sm-6">
+                  <div className="col-sm-6 col-md-6">
                     <label className="form-label scandi-label">Base Rate (%)</label>
                     <input name="mortgageRate" type="number" step="0.1" className="form-control scandi-input border-dark" value={loanConfig.mortgageRate} onChange={handleConfigChange} />
                   </div>
-                  <div className="col-sm-6">
+                  <div className="col-sm-6 col-md-6">
                     <label className="form-label scandi-label">Term (Yrs)</label>
                     <input name="years" type="number" className="form-control scandi-input border-dark" value={loanConfig.years} onChange={handleConfigChange} />
                   </div>
-                  <div className="col-12 mt-4">
+                  <div className="col-12 mt-3">
                     <div className="d-flex align-items-center gap-3">
                       <input 
                         className="scandi-checkbox" 
@@ -568,114 +604,166 @@ export default function App() {
                     </div>
                   </div>
                 </div>
-                {/* Vertical Divider line visible only on lg+ screens */}
-                <div className="d-none d-lg-block border-end border-dark position-absolute" style={{ top: 0, bottom: 0, right: 0 }}></div>
-              </div>
 
-              {/* Column 2: ARM Adjustments */}
-              <div className="col-lg-6">
-                <h6 className="scandi-label text-black mb-3">ARM Adjustments (Rate Changes)</h6>
-                {rateAdjustments.length === 0 && <div className="text-muted small fst-italic mb-3">No rate changes scheduled.</div>}
-                {rateAdjustments.map(item => (
-                  <RateAdjustmentRow 
-                    key={item.id} 
-                    item={item} 
-                    onUpdate={(id, field, val) => updateStrategy(id, field, val, setRateAdjustments)} 
-                    onRemove={(id) => removeStrategy(id, setRateAdjustments)} 
-                  />
-                ))}
-                <button className="btn btn-sm btn-outline-dark fw-bold mt-2 w-100" onClick={() => addStrategy(setRateAdjustments, { rate: 7.0, startDate: "2031-08-01" })}>+ Add Rate Change</button>
-              </div>
-
-            </div>
-
-            {/* REAL ESTATE SECTION */}
-            <h6 className="scandi-label text-muted mb-4 border-bottom border-dark pb-2">Real Estate Details</h6>
-            <div className="row g-4 align-items-end mb-5">
-              <div className="col-sm-6 col-lg-4 col-xl-3">
-                <label className="form-label scandi-label">Initial Home Value ($)</label>
-                <input name="initialHomeValue" type="number" className="form-control scandi-input border-dark" value={loanConfig.initialHomeValue} onChange={handleConfigChange} />
-              </div>
-              <div className="col-sm-12 col-lg-8 col-xl-5">
-                <label className="form-label scandi-label">Appreciation Estimates (%)</label>
-                <div className="input-group">
-                  <span className="input-group-text bg-white text-black fw-bold border-dark">L</span>
-                  <input name="homeGrowthRateLow" type="number" step="0.1" className="form-control scandi-input border-dark px-1 text-center" value={loanConfig.homeGrowthRateLow} onChange={handleConfigChange} />
-                  <span className="input-group-text bg-white text-black fw-bold border-dark border-start-0">M</span>
-                  <input name="homeGrowthRateMed" type="number" step="0.1" className="form-control scandi-input border-dark px-1 text-center" value={loanConfig.homeGrowthRateMed} onChange={handleConfigChange} />
-                  <span className="input-group-text bg-white text-black fw-bold border-dark border-start-0">H</span>
-                  <input name="homeGrowthRateHigh" type="number" step="0.1" className="form-control scandi-input border-dark px-1 text-center" value={loanConfig.homeGrowthRateHigh} onChange={handleConfigChange} />
+                {/* 2. ARM Adjustments */}
+                <h6 className="scandi-label text-muted mb-3 border-top border-light pt-4">ARM Adjustments (Rate Changes)</h6>
+                <div className="mb-4">
+                  {rateAdjustments.length === 0 && <div className="text-muted small fst-italic mb-3">No rate changes scheduled.</div>}
+                  {rateAdjustments.map(item => (
+                    <RateAdjustmentRow 
+                      key={item.id} 
+                      item={item} 
+                      onUpdate={(id, field, val) => updateStrategy(id, field, val, setRateAdjustments)} 
+                      onRemove={(id) => removeStrategy(id, setRateAdjustments)} 
+                    />
+                  ))}
+                  <button className="btn btn-sm btn-outline-dark fw-bold mt-2 w-100" onClick={() => addStrategy(setRateAdjustments, { rate: 7.0, startDate: "2031-08-01" })}>+ Add Rate Change</button>
                 </div>
+
+                {/* 3. Extra Payments */}
+                <h6 className="scandi-label text-muted mb-3 border-top border-light pt-4">Extra Mortgage Payments</h6>
+                <div className="mb-2">
+                  {extraPayments.length === 0 && <div className="text-muted small fst-italic mb-3">No extra payments scheduled.</div>}
+                  {extraPayments.map(item => (
+                    <StrategyRow 
+                      key={item.id} 
+                      item={item} 
+                      onUpdate={(id, field, val) => updateStrategy(id, field, val, setExtraPayments)} 
+                      onRemove={(id) => removeStrategy(id, setExtraPayments)} 
+                    />
+                  ))}
+                  <button className="btn btn-sm btn-outline-dark fw-bold mt-2 w-100" onClick={() => addStrategy(setExtraPayments, { amount: 0, frequency: 1, startDate: defaultStartDate })}>+ Add Payment</button>
+                </div>
+
+              </div>
+
+              {/* === RIGHT COLUMN: WEALTH & INVESTING === */}
+              <div className="col-lg-6 ps-lg-5">
+                <h5 className="scandi-label text-black mb-4 border-bottom border-dark pb-2 fs-6">Wealth & Investing</h5>
+                
+                {/* 1. Real Estate */}
+                <h6 className="scandi-label text-muted mb-3">Real Estate</h6>
+                <div className="row g-3 align-items-end mb-4">
+                  <div className="col-sm-6 col-md-6">
+                    <label className="form-label scandi-label">Initial Home Value ($)</label>
+                    <input name="initialHomeValue" type="number" className="form-control scandi-input border-dark" value={loanConfig.initialHomeValue} onChange={handleConfigChange} />
+                  </div>
+                  <div className="col-sm-12 col-md-12">
+                    <label className="form-label scandi-label">Appreciation (L / M / H %)</label>
+                    <div className="input-group">
+                      <input name="homeGrowthRateLow" type="number" step="0.1" className="form-control scandi-input border-dark px-1 text-center" value={loanConfig.homeGrowthRateLow} onChange={handleConfigChange} />
+                      <span className="input-group-text bg-light text-dark fw-bold border-dark border-start-0 border-end-0">/</span>
+                      <input name="homeGrowthRateMed" type="number" step="0.1" className="form-control scandi-input border-dark px-1 text-center" value={loanConfig.homeGrowthRateMed} onChange={handleConfigChange} />
+                      <span className="input-group-text bg-light text-dark fw-bold border-dark border-start-0 border-end-0">/</span>
+                      <input name="homeGrowthRateHigh" type="number" step="0.1" className="form-control scandi-input border-dark px-1 text-center" value={loanConfig.homeGrowthRateHigh} onChange={handleConfigChange} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Portfolio Base */}
+                <h6 className="scandi-label text-muted mb-3 border-top border-light pt-4">Portfolio Base</h6>
+                <div className="row g-3 align-items-end mb-4">
+                  <div className="col-sm-6 col-md-6">
+                    <label className="form-label scandi-label text-black fw-bolder border-bottom border-dark pb-1">Sim Term (Yrs)</label>
+                    <input name="simulationYears" type="number" className="form-control scandi-input border-dark fw-bold" value={loanConfig.simulationYears} onChange={handleConfigChange} />
+                  </div>
+                  <div className="col-sm-6 col-md-6">
+                    <label className="form-label scandi-label">Init. Port. ($)</label>
+                    <input name="initialInvestment" type="number" className="form-control scandi-input border-dark" value={loanConfig.initialInvestment} onChange={handleConfigChange} />
+                  </div>
+                  <div className="col-sm-12 col-md-12">
+                    <label className="form-label scandi-label">Yield Estimates (L / M / H %)</label>
+                    <div className="input-group">
+                      <input name="investRateLow" type="number" step="0.1" className="form-control scandi-input border-dark px-1 text-center" value={loanConfig.investRateLow} onChange={handleConfigChange} />
+                      <span className="input-group-text bg-light text-dark fw-bold border-dark border-start-0 border-end-0">/</span>
+                      <input name="investRateMed" type="number" step="0.1" className="form-control scandi-input border-dark px-1 text-center" value={loanConfig.investRateMed} onChange={handleConfigChange} />
+                      <span className="input-group-text bg-light text-dark fw-bold border-dark border-start-0 border-end-0">/</span>
+                      <input name="investRateHigh" type="number" step="0.1" className="form-control scandi-input border-dark px-1 text-center" value={loanConfig.investRateHigh} onChange={handleConfigChange} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Ongoing Contributions */}
+                <h6 className="scandi-label text-muted mb-3 border-top border-light pt-4">Ongoing Contributions</h6>
+                <div className="mb-4">
+                  {investments.length === 0 && <div className="text-muted small fst-italic mb-3">No direct investments scheduled.</div>}
+                  {investments.map(item => (
+                    <StrategyRow 
+                      key={item.id} 
+                      item={item} 
+                      onUpdate={(id, field, val) => updateStrategy(id, field, val, setInvestments)} 
+                      onRemove={(id) => removeStrategy(id, setInvestments)} 
+                    />
+                  ))}
+                  <button className="btn btn-sm btn-outline-dark fw-bold mt-2 mb-4 w-100" onClick={() => addStrategy(setInvestments, { amount: 0, frequency: 1, startDate: defaultStartDate })}>+ Add Investment</button>
+                  
+                  <div className="d-flex align-items-center gap-3">
+                    <input 
+                      className="scandi-checkbox" 
+                      type="checkbox" 
+                      name="divertAfterPayoff" 
+                      id="divertCheck"
+                      checked={loanConfig.divertAfterPayoff} 
+                      onChange={handleConfigChange}
+                    />
+                    <label className="scandi-label m-0 text-black lh-sm" htmlFor="divertCheck" style={{ cursor: 'pointer' }}>
+                      Auto-invest freed cash post-mortgage
+                    </label>
+                  </div>
+                </div>
+
+                {/* 4. Retirement Phase */}
+                <h6 className="scandi-label text-muted mb-3 border-top border-light pt-4">Retirement Phase</h6>
+                <div className="mb-2">
+                  <div className="d-flex align-items-center gap-3 mb-3">
+                    <input 
+                      className="scandi-checkbox" 
+                      type="checkbox" 
+                      name="enableRetirement" 
+                      id="enableRetirementCheck"
+                      checked={loanConfig.enableRetirement} 
+                      onChange={handleConfigChange}
+                    />
+                    <label className="scandi-label m-0 text-black lh-sm" htmlFor="enableRetirementCheck" style={{ cursor: 'pointer' }}>
+                      Enable Retirement Withdrawals
+                    </label>
+                  </div>
+
+                  {loanConfig.enableRetirement && (
+                    <div className="row g-3 align-items-end mt-1">
+                      <div className="col-sm-6 col-md-4">
+                        <label className="form-label scandi-label">Retirement Date</label>
+                        <input name="retirementDate" type="date" className="form-control scandi-input border-dark" value={loanConfig.retirementDate} onChange={handleConfigChange} />
+                      </div>
+                      <div className="col-sm-6 col-md-4">
+                        <label className="form-label scandi-label">Yearly Pull (%)</label>
+                        <input name="retirementWithdrawalRate" type="number" step="0.1" className="form-control scandi-input border-dark" value={loanConfig.retirementWithdrawalRate} onChange={handleConfigChange} />
+                      </div>
+                      <div className="col-sm-6 col-md-4">
+                        <label className="form-label scandi-label">Ret. Growth (%)</label>
+                        <input name="retirementGrowthRate" type="number" step="0.1" className="form-control scandi-input border-dark" value={loanConfig.retirementGrowthRate} onChange={handleConfigChange} />
+                      </div>
+                      <div className="col-12 mt-3">
+                        <div className="d-flex align-items-center gap-3">
+                          <input 
+                            className="scandi-checkbox" 
+                            type="checkbox" 
+                            name="stopContributionsInRetirement" 
+                            id="stopContribCheck"
+                            checked={loanConfig.stopContributionsInRetirement} 
+                            onChange={handleConfigChange}
+                          />
+                          <label className="scandi-label m-0 text-black lh-sm" htmlFor="stopContribCheck" style={{ cursor: 'pointer' }}>
+                            Stop all new contributions at retirement
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
               </div>
             </div>
-
-            {/* INVESTMENTS SECTION */}
-            <h6 className="scandi-label text-muted mb-4 border-bottom border-dark pb-2">Investment Details</h6>
-            <div className="row g-4 align-items-end">
-              <div className="col-sm-6 col-lg-3 col-xl-2">
-                <label className="form-label scandi-label text-black fw-bolder border-bottom border-dark pb-1">Sim Term (Yrs)</label>
-                <input name="simulationYears" type="number" className="form-control scandi-input border-dark fw-bold" value={loanConfig.simulationYears} onChange={handleConfigChange} />
-              </div>
-              <div className="col-sm-6 col-lg-3 col-xl-3">
-                <label className="form-label scandi-label">Init. Port. ($)</label>
-                <input name="initialInvestment" type="number" className="form-control scandi-input border-dark" value={loanConfig.initialInvestment} onChange={handleConfigChange} />
-              </div>
-              <div className="col-sm-12 col-xl-4">
-                <label className="form-label scandi-label">Yield Estimates (%)</label>
-                <div className="input-group">
-                  <span className="input-group-text bg-white text-black fw-bold border-dark">L</span>
-                  <input name="investRateLow" type="number" step="0.1" className="form-control scandi-input border-dark px-1 text-center" value={loanConfig.investRateLow} onChange={handleConfigChange} />
-                  <span className="input-group-text bg-white text-black fw-bold border-dark border-start-0">M</span>
-                  <input name="investRateMed" type="number" step="0.1" className="form-control scandi-input border-dark px-1 text-center" value={loanConfig.investRateMed} onChange={handleConfigChange} />
-                  <span className="input-group-text bg-white text-black fw-bold border-dark border-start-0">H</span>
-                  <input name="investRateHigh" type="number" step="0.1" className="form-control scandi-input border-dark px-1 text-center" value={loanConfig.investRateHigh} onChange={handleConfigChange} />
-                </div>
-              </div>
-              <div className="col-sm-12 col-xl-3">
-                <div className="d-flex align-items-center gap-3 h-100 pb-2">
-                  <input 
-                    className="scandi-checkbox" 
-                    type="checkbox" 
-                    name="divertAfterPayoff" 
-                    id="divertCheck"
-                    checked={loanConfig.divertAfterPayoff} 
-                    onChange={handleConfigChange}
-                  />
-                  <label className="scandi-label m-0 text-black lh-sm" htmlFor="divertCheck" style={{ cursor: 'pointer' }}>
-                    Auto-invest freed cash post-mortgage
-                  </label>
-                </div>
-              </div>
-            </div>
-            
-          </div>
-        </div>
-
-        <div className="row g-4 g-xl-5 mb-5">
-          <div className="col-lg-6 flex-fill">
-            <h5 className="scandi-label mb-3 border-bottom border-dark pb-2 text-black">Extra Mortgage Payments</h5>
-            {extraPayments.map(item => (
-              <StrategyRow 
-                key={item.id} 
-                item={item} 
-                onUpdate={(id, field, val) => updateStrategy(id, field, val, setExtraPayments)} 
-                onRemove={(id) => removeStrategy(id, setExtraPayments)} 
-              />
-            ))}
-            <button className="btn btn-outline-dark fw-bold w-100 mt-2" onClick={() => addStrategy(setExtraPayments, { amount: 0, frequency: 1, startDate: defaultStartDate })}>+ Add Payment</button>
-          </div>
-
-          <div className="col-lg-6 flex-fill">
-            <h5 className="scandi-label mb-3 border-bottom border-dark pb-2 text-black">Investment Contributions</h5>
-            {investments.map(item => (
-              <StrategyRow 
-                key={item.id} 
-                item={item} 
-                onUpdate={(id, field, val) => updateStrategy(id, field, val, setInvestments)} 
-                onRemove={(id) => removeStrategy(id, setInvestments)} 
-              />
-            ))}
-            <button className="btn btn-outline-dark fw-bold w-100 mt-2" onClick={() => addStrategy(setInvestments, { amount: 0, frequency: 1, startDate: defaultStartDate })}>+ Add Investment</button>
           </div>
         </div>
 
@@ -712,6 +800,7 @@ export default function App() {
                 <th className="text-danger scandi-label py-3 px-3">Interest (Yr)</th>
                 <th className="text-black scandi-label py-3 px-3">Home (Med)</th>
                 <th className="text-black scandi-label py-3 px-3">Invested (Yr)</th>
+                <th className="text-success scandi-label py-3 px-3">Withdrawn (Yr)</th>
                 <th className="text-muted scandi-label py-3 px-3 d-none d-md-table-cell">Port. Low</th>
                 <th className="text-black scandi-label py-3 px-3 fw-bolder">Port. Med</th>
                 <th className="text-black scandi-label py-3 px-3 d-none d-md-table-cell">Port. High</th>
@@ -727,6 +816,7 @@ export default function App() {
                   <td className="text-danger fw-bold py-3 px-3">{formatCurrency(row.interestPaid)}</td>
                   <td className="py-3 px-3">{formatCurrency(row.homeMed)}</td>
                   <td className="py-3 px-3">{formatCurrency(row.investContributed)}</td>
+                  <td className="text-success fw-bold py-3 px-3">{formatCurrency(row.withdrawn)}</td>
                   <td className="text-muted py-3 px-3 d-none d-md-table-cell">{formatCurrency(row.invLow)}</td>
                   <td className="text-black fw-bolder py-3 px-3">{formatCurrency(row.invMed)}</td>
                   <td className="text-dark fw-bold py-3 px-3 d-none d-md-table-cell">{formatCurrency(row.invHigh)}</td>
