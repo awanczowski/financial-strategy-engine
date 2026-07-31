@@ -68,10 +68,7 @@ export default function ParameterPanel({
                 <label className="form-label scandi-label">Term (Yrs)</label>
                 <input name="years" type="number" className="form-control scandi-input border-dark" value={loanConfig.years} onChange={handleConfigChange} />
               </div>
-              <div className="col-sm-6 col-md-6">
-                <label className="form-label scandi-label text-black fw-bold">Est. Inflation (%)</label>
-                <input name="estimatedInflationRate" type="number" step="0.1" className="form-control scandi-input border-dark" value={loanConfig.estimatedInflationRate} onChange={handleConfigChange} />
-              </div>
+    
               <div className="col-12 mt-3">
                 <div className="d-flex align-items-center gap-3">
                   <input 
