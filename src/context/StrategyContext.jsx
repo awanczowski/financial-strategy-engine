@@ -8,6 +8,7 @@ import {
 } from '../lib/constants.js';
 import { runSimulationEngine } from '../lib/engine/simulation.js';
 import { runMonteCarloSimulation } from '../lib/engine/monteCarlo.js';
+import { decodeScenario } from '../lib/shareSerializer.js';
 
 const loadActiveSession = () => {
   if (typeof window === 'undefined') return null;
@@ -35,6 +36,49 @@ export function StrategyProvider({ children }) {
   const [showMonteCarloModal, setShowMonteCarloModal] = useState(false);
   const [isSimulating, setIsSimulating] = useState(false);
   const [monteCarloResults, setMonteCarloResults] = useState(null);
+
+  // Share & Toast State
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [toastMessage, setToastMessage] = useState(null);
+
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(prev => (prev === msg ? null : prev));
+    }, 3000);
+  };
+
+  // URL Auto-Hydration for Shared Links
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const sharedCode = params.get('scenario');
+      if (sharedCode) {
+        const decoded = decodeScenario(sharedCode);
+        if (decoded) {
+          setLoanConfig(decoded.loanConfig);
+          setExtraPayments(decoded.extraPayments);
+          setInvestments(decoded.investments);
+          setRateAdjustments(decoded.rateAdjustments);
+          setViewMode(decoded.viewMode);
+          showToast("Loaded shared strategy scenario!");
+
+          // Clean scenario parameter from URL bar without page reload
+          const cleanUrl = `${window.location.pathname}${window.location.hash}`;
+          window.history.replaceState({}, document.title, cleanUrl);
+        }
+      }
+    }
+  }, []);
+
+  const loadScenario = (data) => {
+    if (!data) return;
+    if (data.loanConfig) setLoanConfig({ ...defaultLoanConfig, ...data.loanConfig });
+    if (Array.isArray(data.extraPayments)) setExtraPayments(data.extraPayments);
+    if (Array.isArray(data.investments)) setInvestments(data.investments);
+    if (Array.isArray(data.rateAdjustments)) setRateAdjustments(data.rateAdjustments);
+    if (data.viewMode) setViewMode(data.viewMode);
+  };
 
   useEffect(() => {
     const sessionData = {
@@ -168,7 +212,12 @@ export function StrategyProvider({ children }) {
     setShowMonteCarloModal,
     isSimulating,
     monteCarloResults,
-    handleOpenMonteCarlo
+    handleOpenMonteCarlo,
+    showShareModal,
+    setShowShareModal,
+    loadScenario,
+    showToast,
+    toastMessage
   };
 
   return (
