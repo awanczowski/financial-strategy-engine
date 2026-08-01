@@ -25,16 +25,16 @@ export default function Navbar({ loanConfig: propLoanConfig, handleConfigChange:
                 className={`btn btn-sm ${viewMode === 'nominal' ? 'btn-dark' : 'bg-white text-dark'} fw-bold scandi-label px-2 px-sm-3`}
                 onClick={() => setViewMode('nominal')}
               >
-                <span className="d-none d-sm-inline">💵 Nominal Dollars</span>
-                <span className="d-sm-none">💵 Nominal</span>
+                <span className="d-none d-sm-inline">Nominal Dollars</span>
+                <span className="d-sm-none">Nominal</span>
               </button>
               <button
                 type="button"
                 className={`btn btn-sm ${viewMode === 'real' ? 'btn-dark' : 'bg-white text-dark'} fw-bold scandi-label px-2 px-sm-3`}
                 onClick={() => setViewMode('real')}
               >
-                <span className="d-none d-sm-inline">🏷️ Today's Dollars (Real)</span>
-                <span className="d-sm-none">🏷️ Real ($ Today)</span>
+                <span className="d-none d-sm-inline">Today's Dollars (Real)</span>
+                <span className="d-sm-none">Real ($ Today)</span>
               </button>
             </div>
           </div>
@@ -66,7 +66,7 @@ export default function Navbar({ loanConfig: propLoanConfig, handleConfigChange:
             className="btn btn-sm btn-outline-dark fw-bold scandi-label px-2 px-sm-3"
             onClick={() => strategyCtx.setShowShareModal && strategyCtx.setShowShareModal(true)}
           >
-            🔗 <span className="d-none d-sm-inline">Share Scenario</span><span className="d-sm-none">Share</span>
+            <span className="d-none d-sm-inline">Share Scenario</span><span className="d-sm-none">Share</span>
           </button>
 
         </div>

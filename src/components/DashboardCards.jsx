@@ -116,6 +116,53 @@ export default function DashboardCards({ initialBreakdown, summary }) {
         </div>
       )}
 
+      {/* Tax Shield & Multi-Bucket Portfolio Card */}
+      {summary?.taxSummary?.enabled && (
+        <div className="row g-4 mb-4">
+          <div className="col-12">
+            <div className="card dashboard-card bg-white">
+              <div className="card-body p-4">
+                <h6 className="card-subtitle mb-3 scandi-label text-black border-bottom border-dark pb-2">Tax Engine & Account Bucket Breakdown</h6>
+                <div className="row g-3">
+                  <div className="col-md-6 col-lg-3 border-end border-light">
+                    <div className="p-2">
+                      <span className="text-muted small fw-bold text-uppercase d-block mb-1">Total MID/SALT Tax Shield</span>
+                      <span className="text-success fw-bolder fs-4 d-block mb-2">{formatCurrency(summary.taxSummary.totalMidTaxSavings)}</span>
+                      <span className="small text-muted">Total tax savings generated via mortgage interest & property tax deduction shield.</span>
+                    </div>
+                  </div>
+
+                  <div className="col-md-6 col-lg-3 border-end border-light">
+                    <div className="p-2">
+                      <span className="text-muted small fw-bold text-uppercase d-block mb-1">Accumulation Tax Drag</span>
+                      <span className="text-danger fw-bolder fs-4 d-block mb-2">{formatCurrency(summary.taxSummary.totalTaxDragPaid)}</span>
+                      <span className="small text-muted">Total dividend yield tax drag on taxable brokerage account growth.</span>
+                    </div>
+                  </div>
+
+                  <div className="col-md-6 col-lg-3 border-end border-light">
+                    <div className="p-2">
+                      <span className="text-muted small fw-bold text-uppercase d-block mb-1">Pre-Tax (401k/IRA) Balance</span>
+                      <span className="text-black fw-bolder fs-5 d-block mb-2">{formatCurrency(summary.taxSummary.finalTaxDeferredMed)}</span>
+                      <span className="small text-muted">Compounds tax-free; withdrawals taxed as ordinary income.</span>
+                    </div>
+                  </div>
+
+                  <div className="col-md-6 col-lg-3">
+                    <div className="p-2">
+                      <span className="text-muted small fw-bold text-uppercase d-block mb-1">Roth (Tax-Free) Balance</span>
+                      <span className="text-black fw-bolder fs-5 d-block mb-2">{formatCurrency(summary.taxSummary.finalTaxFreeMed)}</span>
+                      <span className="small text-muted">Compounds tax-free; 100% tax-free retirement withdrawals.</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+
       <div className="row g-4 mb-5">
         <div className="col-md-4">
           <div className="card dashboard-card bg-white h-100">

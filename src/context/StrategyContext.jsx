@@ -5,7 +5,8 @@ import {
   defaultLoanConfig,
   defaultExtraPayments,
   defaultInvestments,
-  defaultRefinances
+  defaultRefinances,
+  defaultTaxConfig
 } from '../lib/constants.js';
 import { runSimulationEngine } from '../lib/engine/simulation.js';
 import { runMonteCarloSimulation } from '../lib/engine/monteCarlo.js';
@@ -32,6 +33,7 @@ export function StrategyProvider({ children }) {
   const [investments, setInvestments] = useState(activeSession?.investments || defaultInvestments);
   const [rateAdjustments, setRateAdjustments] = useState(activeSession?.rateAdjustments || []);
   const [refinances, setRefinances] = useState(activeSession?.refinances || defaultRefinances);
+  const [taxConfig, setTaxConfig] = useState(activeSession?.taxConfig || defaultTaxConfig);
   const [viewMode, setViewMode] = useState(activeSession?.viewMode || 'nominal'); // 'nominal' | 'real'
 
   // Monte Carlo State
@@ -62,6 +64,8 @@ export function StrategyProvider({ children }) {
           setExtraPayments(decoded.extraPayments);
           setInvestments(decoded.investments);
           setRateAdjustments(decoded.rateAdjustments);
+          if (decoded.refinances) setRefinances(decoded.refinances);
+          if (decoded.taxConfig) setTaxConfig(decoded.taxConfig);
           setViewMode(decoded.viewMode);
           showToast("Loaded shared strategy scenario!");
 
@@ -79,6 +83,8 @@ export function StrategyProvider({ children }) {
     if (Array.isArray(data.extraPayments)) setExtraPayments(data.extraPayments);
     if (Array.isArray(data.investments)) setInvestments(data.investments);
     if (Array.isArray(data.rateAdjustments)) setRateAdjustments(data.rateAdjustments);
+    if (Array.isArray(data.refinances)) setRefinances(data.refinances);
+    if (data.taxConfig) setTaxConfig({ ...defaultTaxConfig, ...data.taxConfig });
     if (data.viewMode) setViewMode(data.viewMode);
   };
 
@@ -89,10 +95,11 @@ export function StrategyProvider({ children }) {
       investments,
       rateAdjustments,
       refinances,
+      taxConfig,
       viewMode
     };
     localStorage.setItem(ACTIVE_SESSION_KEY, JSON.stringify(sessionData));
-  }, [loanConfig, extraPayments, investments, rateAdjustments, refinances, viewMode]);
+  }, [loanConfig, extraPayments, investments, rateAdjustments, refinances, taxConfig, viewMode]);
 
   const handleConfigChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -110,6 +117,25 @@ export function StrategyProvider({ children }) {
       ...prev, 
       [name]: finalValue
     }));
+  };
+
+  const handleTaxConfigChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    let finalValue = type === 'checkbox' ? checked : (name === 'jurisdiction' || name === 'filingStatus' || name === 'saltCapLimit' ? value : (value === '' ? '' : Number(value)));
+
+    setTaxConfig(prev => {
+      const updated = { ...prev, [name]: finalValue };
+      if (name === 'jurisdiction') {
+        if (value === 'NY_NYC') {
+          updated.currentMarginalRate = 34.7;
+        } else if (value === 'CA') {
+          updated.currentMarginalRate = 33.0;
+        } else if (value === 'TX_FL') {
+          updated.currentMarginalRate = 24.0;
+        }
+      }
+      return updated;
+    });
   };
 
   const addStrategy = (setter, defaultObj) => {
@@ -132,8 +158,8 @@ export function StrategyProvider({ children }) {
 
   // Deterministic simulation computed via engine library
   const { scheduleData, summary, initialBreakdown, monthContributions } = useMemo(() => {
-    return runSimulationEngine(loanConfig, extraPayments, investments, rateAdjustments, refinances);
-  }, [loanConfig, extraPayments, investments, rateAdjustments, refinances]);
+    return runSimulationEngine(loanConfig, extraPayments, investments, rateAdjustments, refinances, taxConfig);
+  }, [loanConfig, extraPayments, investments, rateAdjustments, refinances, taxConfig]);
 
   // Derived active summary and schedule data based on viewMode ('nominal' vs 'real')
   const activeSummary = useMemo(() => {
@@ -201,6 +227,9 @@ export function StrategyProvider({ children }) {
     setRateAdjustments,
     refinances,
     setRefinances,
+    taxConfig,
+    setTaxConfig,
+    handleTaxConfigChange,
     viewMode,
     setViewMode,
     handleConfigChange,

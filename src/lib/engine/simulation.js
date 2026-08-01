@@ -1,6 +1,6 @@
 import { calculateStandardPayment, getMonthOffset } from './math.js';
 
-export const runSimulationEngine = (loanConfig, extraPayments = [], investments = [], rateAdjustments = [], refinances = []) => {
+export const runSimulationEngine = (loanConfig, extraPayments = [], investments = [], rateAdjustments = [], refinances = [], taxConfig = {}) => {
   const loanMonths = (Number(loanConfig.years) || 0) * 12;
   const simulationMonths = (Number(loanConfig.simulationYears) || 0) * 12;
   const isBiweekly = loanConfig.isBiweekly;
@@ -35,6 +35,34 @@ export const runSimulationEngine = (loanConfig, extraPayments = [], investments 
   let currentHomeValueLow = Number(loanConfig.initialHomeValue) || 0;
   let currentHomeValueMed = Number(loanConfig.initialHomeValue) || 0;
   let currentHomeValueHigh = Number(loanConfig.initialHomeValue) || 0;
+  
+  // Tax Engine Buckets & Configuration
+  const enableTaxEngine = Boolean(taxConfig.enableTaxEngine);
+  const currentMarginalRate = (Number(taxConfig.currentMarginalRate) || 0) / 100;
+  const retirementEffectiveRate = (Number(taxConfig.retirementEffectiveRate) || 0) / 100;
+  const capitalGainsRate = (Number(taxConfig.capitalGainsRate) || 0) / 100;
+  const dividendYieldRate = (Number(taxConfig.dividendYieldRate) || 0) / 100;
+  const annualPropertyTax = Number(taxConfig.annualPropertyTax) || 0;
+  const stateTaxAmount = Number(taxConfig.stateTaxAmount) || 0;
+  let saltCapLimit;
+  if (taxConfig.saltCapLimit === 'UNLIMITED') {
+    saltCapLimit = Infinity;
+  } else if (taxConfig.saltCapLimit === 'CUSTOM') {
+    saltCapLimit = Number(taxConfig.customSaltCap) || 0;
+  } else {
+    saltCapLimit = Number(taxConfig.saltCapLimit) || 10000;
+  }
+  const standardDeduction = taxConfig.filingStatus === 'SINGLE' ? 15000 : 30000;
+  const otherItemizedDeductions = Number(taxConfig.otherItemizedDeductions) || Number(taxConfig.customCharitable) || 0;
+  const initialPrincipal = Number(loanConfig.principal) || 0;
+
+  let taxableMed = Number(loanConfig.initialInvestment) || 0;
+  let taxDeferredMed = 0;
+  let taxFreeMed = 0;
+
+  let totalTaxDragPaid = 0;
+  let totalMidTaxSavings = 0;
+  let yearInterestForMID = 0;
   
   let yearlyData = [];
   let trackedMonthContributions = [];
@@ -134,12 +162,21 @@ export const runSimulationEngine = (loanConfig, extraPayments = [], investments 
       return total;
     }, 0);
 
-    let investContributionThisMonth = activeInvestments.reduce((total, inv) => {
+    let investContributionThisMonth = 0;
+    let taxableContribThisMonth = 0;
+    let taxDeferredContribThisMonth = 0;
+    let taxFreeContribThisMonth = 0;
+
+    activeInvestments.forEach(inv => {
       if (month >= inv.startMonth && (month - inv.startMonth) % (Number(inv.frequency) || 1) === 0) {
-        return total + (Number(inv.amount) || 0);
+        const amount = Number(inv.amount) || 0;
+        investContributionThisMonth += amount;
+        const type = inv.accountType || 'TAXABLE';
+        if (type === 'TAX_DEFERRED') taxDeferredContribThisMonth += amount;
+        else if (type === 'TAX_FREE') taxFreeContribThisMonth += amount;
+        else taxableContribThisMonth += amount;
       }
-      return total;
-    }, 0);
+    });
 
     if (month === 1) {
       firstMonthBreakdown = {
@@ -173,6 +210,7 @@ export const runSimulationEngine = (loanConfig, extraPayments = [], investments 
       
       yearMortgagePaid += totalPaymentThisMonth;
       yearInterestPaid += interestThisMonth;
+      yearInterestForMID += interestThisMonth;
       totalInterestPaid += interestThisMonth;
 
       yearMortgagePaidReal += totalPaymentThisMonth * discountFactor;
@@ -181,7 +219,9 @@ export const runSimulationEngine = (loanConfig, extraPayments = [], investments 
     } else {
       if (loanConfig.divertAfterPayoff) {
         let divertedStandard = month <= loanEndMonth ? totalBasePaymentThisMonth : 0;
-        investContributionThisMonth += divertedStandard + extraThisMonth;
+        let divertedTotal = divertedStandard + extraThisMonth;
+        investContributionThisMonth += divertedTotal;
+        taxableContribThisMonth += divertedTotal;
       }
     }
 
@@ -237,10 +277,50 @@ export const runSimulationEngine = (loanConfig, extraPayments = [], investments 
       actualWithdrawnMed = Math.min(withdrawalMed, availableMed);
     }
 
-    // Real estate is isolated. Withdrawals ONLY pull from liquid investments.
-    currentInvestmentLow = Math.max(0, currentInvestmentLow + (currentInvestmentLow * yieldLow) + investContributionThisMonth - withdrawalLow);
-    currentInvestmentMed = Math.max(0, currentInvestmentMed + (currentInvestmentMed * yieldMed) + investContributionThisMonth - withdrawalMed);
-    currentInvestmentHigh = Math.max(0, currentInvestmentHigh + (currentInvestmentHigh * yieldHigh) + investContributionThisMonth - withdrawalHigh);
+    // Tax Drag Math & Bucket Balances
+    let monthlyDividendTaxDrag = enableTaxEngine ? (dividendYieldRate * capitalGainsRate) / 12 : 0;
+    let effectiveTaxableYieldLow = Math.max(0, yieldLow - monthlyDividendTaxDrag);
+    let effectiveTaxableYieldMed = Math.max(0, yieldMed - monthlyDividendTaxDrag);
+    let effectiveTaxableYieldHigh = Math.max(0, yieldHigh - monthlyDividendTaxDrag);
+
+    if (enableTaxEngine) {
+      totalTaxDragPaid += taxableMed * monthlyDividendTaxDrag;
+    }
+
+    taxableMed = Math.max(0, taxableMed + (taxableMed * effectiveTaxableYieldMed) + taxableContribThisMonth);
+    taxDeferredMed = Math.max(0, taxDeferredMed + (taxDeferredMed * yieldMed) + taxDeferredContribThisMonth);
+    taxFreeMed = Math.max(0, taxFreeMed + (taxFreeMed * yieldMed) + taxFreeContribThisMonth);
+
+    // Decumulation Waterfall: Taxable -> Tax Deferred (Grossed Up) -> Tax Free
+    if (isRetired && actualWithdrawnMed > 0) {
+      let remainingWithdrawal = actualWithdrawnMed;
+
+      // 1. Pull from Taxable
+      if (taxableMed > 0) {
+        const pull = Math.min(taxableMed, remainingWithdrawal);
+        taxableMed -= pull;
+        remainingWithdrawal -= pull;
+      }
+      // 2. Pull from Pre-Tax (Tax-Deferred) with Gross-up
+      if (remainingWithdrawal > 0 && taxDeferredMed > 0) {
+        const grossUpFactor = enableTaxEngine ? (1 / Math.max(0.01, 1 - retirementEffectiveRate)) : 1.0;
+        const grossPullNeeded = remainingWithdrawal * grossUpFactor;
+        const actualGrossPull = Math.min(taxDeferredMed, grossPullNeeded);
+        taxDeferredMed -= actualGrossPull;
+        const netReceived = actualGrossPull / grossUpFactor;
+        remainingWithdrawal = Math.max(0, remainingWithdrawal - netReceived);
+      }
+      // 3. Pull from Roth (Tax-Free)
+      if (remainingWithdrawal > 0 && taxFreeMed > 0) {
+        const pull = Math.min(taxFreeMed, remainingWithdrawal);
+        taxFreeMed -= pull;
+        remainingWithdrawal -= pull;
+      }
+    }
+
+    currentInvestmentMed = taxableMed + taxDeferredMed + taxFreeMed;
+    currentInvestmentLow = Math.max(0, currentInvestmentLow + (currentInvestmentLow * effectiveTaxableYieldLow) + investContributionThisMonth - withdrawalLow);
+    currentInvestmentHigh = Math.max(0, currentInvestmentHigh + (currentInvestmentHigh * effectiveTaxableYieldHigh) + investContributionThisMonth - withdrawalHigh);
     
     currentHomeValueLow += currentHomeValueLow * monthlyHomeGrowthLow;
     currentHomeValueMed += currentHomeValueMed * monthlyHomeGrowthMed;
@@ -257,6 +337,18 @@ export const runSimulationEngine = (loanConfig, extraPayments = [], investments 
     totalWithdrawnOverallReal += actualWithdrawnMed * discountFactor;
 
     if (month % 12 === 0) {
+      if (enableTaxEngine) {
+        const midRatio = initialPrincipal > 750000 ? (750000 / initialPrincipal) : 1.0;
+        const eligibleMidInterest = yearInterestForMID * midRatio;
+        const totalSalt = annualPropertyTax + stateTaxAmount;
+        const itemizedSalt = Math.min(totalSalt, saltCapLimit);
+        const totalItemized = itemizedSalt + eligibleMidInterest + otherItemizedDeductions;
+        const netItemizedOverStandard = Math.max(0, totalItemized - standardDeduction);
+        const annualTaxSavings = netItemizedOverStandard * currentMarginalRate;
+        totalMidTaxSavings += annualTaxSavings;
+      }
+      yearInterestForMID = 0;
+
       const yearIndex = month / 12;
       const yearDiscountFactor = Math.pow(1 + inflationRateAnnual, -yearIndex);
 
@@ -338,7 +430,15 @@ export const runSimulationEngine = (loanConfig, extraPayments = [], investments 
       finalNetWorthLowReal: ((currentInvestmentLow + currentHomeValueLow) - Math.max(0, currentPrincipal)) * finalDiscountFactor,
       finalNetWorthMedReal: ((currentInvestmentMed + currentHomeValueMed) - Math.max(0, currentPrincipal)) * finalDiscountFactor,
       finalNetWorthHighReal: ((currentInvestmentHigh + currentHomeValueHigh) - Math.max(0, currentPrincipal)) * finalDiscountFactor,
-      refinanceEvents
+      refinanceEvents,
+      taxSummary: {
+        enabled: enableTaxEngine,
+        totalMidTaxSavings,
+        totalTaxDragPaid,
+        finalTaxableMed: taxableMed,
+        finalTaxDeferredMed: taxDeferredMed,
+        finalTaxFreeMed: taxFreeMed
+      }
     }
   };
 };

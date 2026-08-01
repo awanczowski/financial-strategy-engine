@@ -1,4 +1,4 @@
-import { defaultLoanConfig, defaultExtraPayments, defaultInvestments, defaultStartDate, defaultRetirementDate } from './constants.js';
+import { defaultLoanConfig, defaultExtraPayments, defaultInvestments, defaultTaxConfig, defaultStartDate, defaultRetirementDate } from './constants.js';
 
 export const encodeScenario = (statePayload) => {
   try {
@@ -9,6 +9,7 @@ export const encodeScenario = (statePayload) => {
       investments: statePayload.investments || [],
       rateAdjustments: statePayload.rateAdjustments || [],
       refinances: statePayload.refinances || [],
+      taxConfig: statePayload.taxConfig || defaultTaxConfig,
       viewMode: statePayload.viewMode || 'nominal'
     };
     const jsonStr = JSON.stringify(cleanPayload);
@@ -33,6 +34,7 @@ export const decodeScenario = (encodedStr) => {
       investments: Array.isArray(parsed.investments) ? parsed.investments : defaultInvestments,
       rateAdjustments: Array.isArray(parsed.rateAdjustments) ? parsed.rateAdjustments : [],
       refinances: Array.isArray(parsed.refinances) ? parsed.refinances : [],
+      taxConfig: { ...defaultTaxConfig, ...(parsed.taxConfig || {}) },
       viewMode: parsed.viewMode === 'real' ? 'real' : 'nominal'
     };
   } catch (e) {
@@ -57,6 +59,7 @@ export const exportScenarioToJson = (statePayload, filename = 'strategy-scenario
       investments: statePayload.investments || defaultInvestments,
       rateAdjustments: statePayload.rateAdjustments || [],
       refinances: statePayload.refinances || [],
+      taxConfig: statePayload.taxConfig || defaultTaxConfig,
       viewMode: statePayload.viewMode || 'nominal'
     };
     const blob = new Blob([JSON.stringify(cleanPayload, null, 2)], { type: 'application/json' });
@@ -83,6 +86,7 @@ export const importScenarioFromJson = (jsonContent) => {
       investments: Array.isArray(parsed.investments) ? parsed.investments : defaultInvestments,
       rateAdjustments: Array.isArray(parsed.rateAdjustments) ? parsed.rateAdjustments : [],
       refinances: Array.isArray(parsed.refinances) ? parsed.refinances : [],
+      taxConfig: { ...defaultTaxConfig, ...(parsed.taxConfig || {}) },
       viewMode: parsed.viewMode === 'real' ? 'real' : 'nominal'
     };
   } catch (e) {

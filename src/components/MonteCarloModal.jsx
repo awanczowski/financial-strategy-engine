@@ -109,14 +109,14 @@ export default function MonteCarloModal({
                     className={`btn ${!isReal ? 'btn-dark' : 'bg-white text-dark'} fw-bold scandi-label px-2`}
                     onClick={() => setMcViewMode('nominal')}
                   >
-                    💵 Nominal
+                    Nominal
                   </button>
                   <button
                     type="button"
                     className={`btn ${isReal ? 'btn-dark' : 'bg-white text-dark'} fw-bold scandi-label px-2`}
                     onClick={() => setMcViewMode('real')}
                   >
-                    🏷️ Real ($ Today)
+                    Real ($ Today)
                   </button>
                 </div>
               </div>
@@ -127,7 +127,7 @@ export default function MonteCarloModal({
                   disabled={isSimulating}
                   className="btn btn-dark btn-sm w-100 fw-bold scandi-label py-2"
                 >
-                  {isSimulating ? 'Simulating...' : '⚡ Re-Run Stress Test'}
+                  {isSimulating ? 'Simulating...' : 'Re-Run Stress Test'}
                 </button>
               </div>
 
