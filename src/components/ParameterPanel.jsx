@@ -1,6 +1,7 @@
 import React from 'react';
 import StrategyRow from './StrategyRow.jsx';
 import RateAdjustmentRow from './RateAdjustmentRow.jsx';
+import RefinanceRow from './RefinanceRow.jsx';
 import { defaultStartDate } from '../lib/constants.js';
 
 export default function ParameterPanel({
@@ -12,6 +13,8 @@ export default function ParameterPanel({
   setInvestments,
   rateAdjustments,
   setRateAdjustments,
+  refinances = [],
+  setRefinances,
   addStrategy,
   removeStrategy,
   updateStrategy,
@@ -101,7 +104,22 @@ export default function ParameterPanel({
               <button className="btn btn-sm btn-outline-dark fw-bold mt-2 w-100" onClick={() => addStrategy(setRateAdjustments, { rate: 7.0, startDate: "2031-08-01" })}>+ Add Rate Change</button>
             </div>
 
-            {/* 4. Extra Payments */}
+            {/* 4. Refinances */}
+            <h6 className="scandi-label text-muted mb-3 border-top border-light pt-4">Mortgage Refinances</h6>
+            <div className="mb-4">
+              {refinances.length === 0 && <div className="text-muted small fst-italic mb-3">No refinances scheduled.</div>}
+              {refinances.map(item => (
+                <RefinanceRow 
+                  key={item.id} 
+                  item={item} 
+                  onUpdate={(id, field, val) => updateStrategy(id, field, val, setRefinances)} 
+                  onRemove={(id) => removeStrategy(id, setRefinances)} 
+                />
+              ))}
+              <button className="btn btn-sm btn-outline-dark fw-bold mt-2 w-100" onClick={() => addStrategy(setRefinances, { startDate: defaultStartDate, newRate: 5.5, newTermYears: 30, closingCosts: 4000 })}>+ Add Refinance</button>
+            </div>
+
+            {/* 5. Extra Payments */}
             <h6 className="scandi-label text-muted mb-3 border-top border-light pt-4">Extra Mortgage Payments</h6>
             <div className="mb-2">
               {extraPayments.length === 0 && <div className="text-muted small fst-italic mb-3">No extra payments scheduled.</div>}

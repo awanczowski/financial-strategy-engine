@@ -4,7 +4,8 @@ import {
   ACTIVE_SESSION_KEY,
   defaultLoanConfig,
   defaultExtraPayments,
-  defaultInvestments
+  defaultInvestments,
+  defaultRefinances
 } from '../lib/constants.js';
 import { runSimulationEngine } from '../lib/engine/simulation.js';
 import { runMonteCarloSimulation } from '../lib/engine/monteCarlo.js';
@@ -30,6 +31,7 @@ export function StrategyProvider({ children }) {
   const [extraPayments, setExtraPayments] = useState(activeSession?.extraPayments || defaultExtraPayments);
   const [investments, setInvestments] = useState(activeSession?.investments || defaultInvestments);
   const [rateAdjustments, setRateAdjustments] = useState(activeSession?.rateAdjustments || []);
+  const [refinances, setRefinances] = useState(activeSession?.refinances || defaultRefinances);
   const [viewMode, setViewMode] = useState(activeSession?.viewMode || 'nominal'); // 'nominal' | 'real'
 
   // Monte Carlo State
@@ -86,10 +88,11 @@ export function StrategyProvider({ children }) {
       extraPayments,
       investments,
       rateAdjustments,
+      refinances,
       viewMode
     };
     localStorage.setItem(ACTIVE_SESSION_KEY, JSON.stringify(sessionData));
-  }, [loanConfig, extraPayments, investments, rateAdjustments, viewMode]);
+  }, [loanConfig, extraPayments, investments, rateAdjustments, refinances, viewMode]);
 
   const handleConfigChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -129,8 +132,8 @@ export function StrategyProvider({ children }) {
 
   // Deterministic simulation computed via engine library
   const { scheduleData, summary, initialBreakdown, monthContributions } = useMemo(() => {
-    return runSimulationEngine(loanConfig, extraPayments, investments, rateAdjustments);
-  }, [loanConfig, extraPayments, investments, rateAdjustments]);
+    return runSimulationEngine(loanConfig, extraPayments, investments, rateAdjustments, refinances);
+  }, [loanConfig, extraPayments, investments, rateAdjustments, refinances]);
 
   // Derived active summary and schedule data based on viewMode ('nominal' vs 'real')
   const activeSummary = useMemo(() => {
@@ -196,6 +199,8 @@ export function StrategyProvider({ children }) {
     setInvestments,
     rateAdjustments,
     setRateAdjustments,
+    refinances,
+    setRefinances,
     viewMode,
     setViewMode,
     handleConfigChange,

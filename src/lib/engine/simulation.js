@@ -1,6 +1,6 @@
 import { calculateStandardPayment, getMonthOffset } from './math.js';
 
-export const runSimulationEngine = (loanConfig, extraPayments = [], investments = [], rateAdjustments = []) => {
+export const runSimulationEngine = (loanConfig, extraPayments = [], investments = [], rateAdjustments = [], refinances = []) => {
   const loanMonths = (Number(loanConfig.years) || 0) * 12;
   const simulationMonths = (Number(loanConfig.simulationYears) || 0) * 12;
   const isBiweekly = loanConfig.isBiweekly;
@@ -11,6 +11,7 @@ export const runSimulationEngine = (loanConfig, extraPayments = [], investments 
   const activeExtra = extraPayments.map(p => ({ ...p, startMonth: getMonthOffset(baseDate, p.startDate) }));
   const activeInvestments = investments.map(p => ({ ...p, startMonth: getMonthOffset(baseDate, p.startDate) }));
   const activeRates = rateAdjustments.map(p => ({ ...p, startMonth: getMonthOffset(baseDate, p.startDate) }));
+  const activeRefinances = refinances.map(p => ({ ...p, startMonth: getMonthOffset(baseDate, p.startDate) }));
 
   const monthlyInvestRateLow = ((Number(loanConfig.investRateLow) || 0) / 100) / 12;
   const monthlyInvestRateMed = ((Number(loanConfig.investRateMed) || 0) / 100) / 12;
@@ -22,7 +23,10 @@ export const runSimulationEngine = (loanConfig, extraPayments = [], investments 
   
   let currentPrincipal = Number(loanConfig.principal) || 0;
   let currentAnnualRate = Number(loanConfig.mortgageRate) || 0;
+  let currentLoanTermMonths = loanMonths;
+  let loanEndMonth = loanMonths;
   let standardMonthlyPayment = calculateStandardPayment(currentPrincipal, currentAnnualRate, loanMonths);
+  let refinanceEvents = [];
   
   let currentInvestmentLow = Number(loanConfig.initialInvestment) || 0;
   let currentInvestmentMed = Number(loanConfig.initialInvestment) || 0;
@@ -64,10 +68,55 @@ export const runSimulationEngine = (loanConfig, extraPayments = [], investments 
     const isRetired = month >= retirementStartMonth;
     const discountFactor = Math.pow(1 + inflationRateAnnual, -(month / 12));
 
+    const refinanceThisMonth = activeRefinances.find(ref => ref.startMonth === month);
+    if (refinanceThisMonth && currentPrincipal > 0) {
+      const closingCosts = Number(refinanceThisMonth.closingCosts) || 0;
+      const newRate = Number(refinanceThisMonth.newRate) || 0;
+      const newTermYears = Number(refinanceThisMonth.newTermYears) || 0;
+      const newTermMonths = newTermYears * 12;
+
+      const oldPrincipal = currentPrincipal;
+      const oldRate = currentAnnualRate;
+      const oldPayment = standardMonthlyPayment;
+      const oldMonthlyInterest = oldPrincipal * ((oldRate / 100) / 12);
+
+      currentPrincipal += closingCosts;
+      currentAnnualRate = newRate;
+      currentLoanTermMonths = newTermMonths;
+      standardMonthlyPayment = calculateStandardPayment(currentPrincipal, currentAnnualRate, currentLoanTermMonths);
+      loanEndMonth = month - 1 + currentLoanTermMonths;
+
+      const newMonthlyInterest = currentPrincipal * ((currentAnnualRate / 100) / 12);
+      const monthlyInterestSavings = oldMonthlyInterest - newMonthlyInterest;
+      const monthlyPaymentSavings = oldPayment - standardMonthlyPayment;
+
+      const breakevenMonthsInterest = monthlyInterestSavings > 0 ? (closingCosts / monthlyInterestSavings) : null;
+      const breakevenMonthsPayment = monthlyPaymentSavings > 0 ? (closingCosts / monthlyPaymentSavings) : null;
+
+      refinanceEvents.push({
+        id: refinanceThisMonth.id,
+        startDate: refinanceThisMonth.startDate,
+        month,
+        closingCosts,
+        newRate,
+        newTermYears,
+        oldPrincipal,
+        newPrincipal: currentPrincipal,
+        oldPayment,
+        newPayment: standardMonthlyPayment,
+        monthlyPaymentSavings,
+        monthlyInterestSavings,
+        breakevenMonthsInterest,
+        breakevenMonthsPayment,
+        breakevenYearsInterest: breakevenMonthsInterest ? breakevenMonthsInterest / 12 : null,
+        breakevenYearsPayment: breakevenMonthsPayment ? breakevenMonthsPayment / 12 : null
+      });
+    }
+
     const adjustmentThisMonth = activeRates.find(adj => adj.startMonth === month);
-    if (adjustmentThisMonth && currentPrincipal > 0) {
+    if (adjustmentThisMonth && currentPrincipal > 0 && !refinanceThisMonth) {
       currentAnnualRate = Number(adjustmentThisMonth.rate) || 0;
-      const remainingLoanMonths = loanMonths - month + 1;
+      const remainingLoanMonths = Math.max(1, loanEndMonth - month + 1);
       standardMonthlyPayment = calculateStandardPayment(currentPrincipal, currentAnnualRate, remainingLoanMonths);
     }
 
@@ -131,7 +180,7 @@ export const runSimulationEngine = (loanConfig, extraPayments = [], investments 
       totalInterestPaidReal += interestThisMonth * discountFactor;
     } else {
       if (loanConfig.divertAfterPayoff) {
-        let divertedStandard = month <= loanMonths ? totalBasePaymentThisMonth : 0;
+        let divertedStandard = month <= loanEndMonth ? totalBasePaymentThisMonth : 0;
         investContributionThisMonth += divertedStandard + extraThisMonth;
       }
     }
@@ -288,7 +337,8 @@ export const runSimulationEngine = (loanConfig, extraPayments = [], investments 
       finalInvHighReal: currentInvestmentHigh * finalDiscountFactor,
       finalNetWorthLowReal: ((currentInvestmentLow + currentHomeValueLow) - Math.max(0, currentPrincipal)) * finalDiscountFactor,
       finalNetWorthMedReal: ((currentInvestmentMed + currentHomeValueMed) - Math.max(0, currentPrincipal)) * finalDiscountFactor,
-      finalNetWorthHighReal: ((currentInvestmentHigh + currentHomeValueHigh) - Math.max(0, currentPrincipal)) * finalDiscountFactor
+      finalNetWorthHighReal: ((currentInvestmentHigh + currentHomeValueHigh) - Math.max(0, currentPrincipal)) * finalDiscountFactor,
+      refinanceEvents
     }
   };
 };
