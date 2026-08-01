@@ -1,14 +1,15 @@
 # Strategy Engine: Paydown vs. Invest Calculator
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/Version-v1.8.0-black.svg)](package.json)
 [![AI-Co-Created](https://img.shields.io/badge/Codebase-AI--Co--Created-8A2BE2.svg)](AI_TRANSPARENCY.md)
 [![CI Status](https://img.shields.io/badge/CI-Passing-brightgreen.svg)](.github/workflows/ci.yml)
 [![React](https://img.shields.io/badge/React-19.0-blue)](package.json)
 [![Vite](https://img.shields.io/badge/Vite-8.2-purple)](package.json)
-[![Test Suite](https://img.shields.io/badge/Tests-32_Passed-success)](src/components/__tests__/)
+[![Test Suite](https://img.shields.io/badge/Tests-36_Passed-success)](src/components/__tests__/)
 
 ## Overview
-Strategy Engine is a fluid, single-page React application designed to mathematically compare the long-term financial impacts of aggressive mortgage paydown strategies versus compounding market investments. It provides a comprehensive, period-by-period simulation of net worth trajectory, factoring in real estate appreciation, variable interest rates, flexible contribution schedules, multi-bucket tax treatment, refinance events, and a robust retirement withdrawal phase.
+Strategy Engine is a fluid, single-page React application designed to mathematically compare the long-term financial impacts of aggressive mortgage paydown strategies versus compounding market investments. It provides a comprehensive, period-by-period simulation of net worth trajectory, factoring in real estate appreciation, variable interest rates, flexible contribution schedules, multi-bucket tax treatment, refinance events, Social Security decumulation floors, and a robust retirement withdrawal phase.
 
 Additionally, it features an advanced **Monte Carlo Simulation** to stress-test portfolios against sequence-of-return risk, providing statistical probabilities of success rather than straight-line averages.
 
@@ -17,8 +18,9 @@ Additionally, it features an advanced **Monte Carlo Simulation** to stress-test 
 2. **True Net Worth Tracking:** Calculate and visualize holistic net worth by dynamically treating the mortgage as a decreasing liability against appreciating real estate and liquid assets.
 3. **Refinance & Rate Adjustment Engine:** Model future Adjustable Rate Mortgage (ARM) shifts and explicit Mortgage Refinance events, calculating closing cost roll-ins, updated monthly obligations, and exact interest breakeven timelines.
 4. **Multi-Bucket Tax Drag & Tax Shield Modeling:** Differentiate between Taxable Brokerage, Pre-Tax (401k/IRA), and Roth (Tax-Free) accounts during accumulation and decumulation. Account for dividend yield tax drag, pre-tax retirement withdrawal gross-ups, state income tax, property tax, and itemized Mortgage Interest Deduction (MID) / SALT tax shields.
-5. **Real (Inflation-Adjusted) vs. Nominal Analysis:** Toggle between nominal future dollars and discounted real dollars (today's purchasing power).
-6. **Statistical Stress Testing:** Execute thousands of randomized market simulations using lognormal distributions to measure portfolio survival probabilities across 55-year horizons.
+5. **Social Security & Pension Income Modeling:** Incorporate independent Self and Spouse Social Security income streams, claim start dates, and annual COLA adjustments to offset portfolio decumulation withdrawals dollar-for-dollar.
+6. **Real (Inflation-Adjusted) vs. Nominal Analysis:** Toggle between nominal future dollars and discounted real dollars (today's purchasing power).
+7. **Statistical Stress Testing:** Execute thousands of randomized market simulations using lognormal distributions to measure portfolio survival probabilities across 55-year horizons with Social Security cash flows included.
 
 ## Key Features
 
@@ -35,8 +37,13 @@ Additionally, it features an advanced **Monte Carlo Simulation** to stress-test 
 * **Itemized MID & SALT Tax Shield Engine:** Model Mortgage Interest Deduction (MID) with pro-rata scaling for loans exceeding the $750,000 IRS principal cap. Deduct itemized State and Local Taxes (SALT) with preset or custom caps ($10k TCJA, $20k proposal, single, unlimited, or custom dollar cap), annual property tax, state income tax, and custom itemized deductions (charitable/medical).
 * **Regional Jurisdiction Presets:** Built-in regional presets for New York (NY State + NYC), California (CA State), and Texas / Florida (No State Tax).
 
+### Social Security & Pension Income Engine
+* **Self & Spouse Benefit Modeling:** Configure independent monthly benefits ($/month), claim start dates (YYYY-MM), and annual Cost of Living Adjustment (COLA) percentages for Self and Spouse.
+* **Inflation-Preserved COLA Compounding:** Inputs in today's dollars (matching ssa.gov statements) compound from base date through retirement to maintain real purchasing power.
+* **Portfolio Withdrawal Offsets:** Social Security income offsets required retirement portfolio decumulation dollar-for-dollar; excess Social Security is automatically reinvested.
+
 ### Guided Onboarding & Interactive Tutorial
-* **Step-by-Step Interactive Walkthrough:** An 8-step guided tutorial overlay (`OnboardingModal`) walking new users through core philosophy, mortgage inputs, refinance triggers, multi-bucket wealth allocation, tax strategy engine, real vs. nominal inflation discounting, Monte Carlo stress testing, and scenario sharing.
+* **Step-by-Step Interactive Walkthrough:** A 9-step guided tutorial overlay (`OnboardingModal`) walking new users through core philosophy, mortgage inputs, refinance triggers, multi-bucket wealth allocation, tax strategy engine, Social Security decumulation, real vs. nominal inflation discounting, Monte Carlo stress testing, and scenario sharing.
 * **First-Visit Auto-Prompt:** Automatically offers onboarding on first visit (persisted via `localStorage`), with a "Guided Tour" button in the Navbar for on-demand replaying.
 * **Contextual Info Tooltips:** Inline minimalist info icons across parameter controls providing contextual financial guidance on hover.
 
