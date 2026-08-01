@@ -17,3 +17,5 @@ Fixes # (issue)
 - [ ] I have added tests that prove my fix is effective or that my feature works
 - [ ] All new and existing tests pass (`npm test`)
 - [ ] Production build succeeds cleanly (`npm run build`)
+- [ ] I have disclosed any AI assistance / AI code generation used in this Pull Request
+

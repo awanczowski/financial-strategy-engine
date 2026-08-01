@@ -1,6 +1,7 @@
 # Strategy Engine: Paydown vs. Invest Calculator
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![AI-Co-Created](https://img.shields.io/badge/Codebase-AI--Co--Created-8A2BE2.svg)](AI_TRANSPARENCY.md)
 [![CI Status](https://img.shields.io/badge/CI-Passing-brightgreen.svg)](.github/workflows/ci.yml)
 [![React](https://img.shields.io/badge/React-19.0-blue)](package.json)
 [![Vite](https://img.shields.io/badge/Vite-8.2-purple)](package.json)
@@ -85,12 +86,21 @@ npm run build
 
 ---
 
+## AI Transparency & Co-Creation
+
+This codebase was developed via **human-in-the-loop AI pair programming** using Google DeepMind's Antigravity AI agentic coding system and Gemini models. All AI-generated algorithms, components, and test suites are verified through automated Vitest test suites (`npm test`), static linting (`npm run lint`), and production build compilation (`npm run build`).
+
+For full details regarding AI development methodology and standards, see [AI_TRANSPARENCY.md](AI_TRANSPARENCY.md) and [NOTICE](NOTICE).
+
+---
+
 ## Contributing & Governance
 
 Contributions are welcome! Please review our community guidelines before submitting pull requests:
 * **[Contributing Guidelines](CONTRIBUTING.md)**: Setup instructions, coding standards, and PR workflows.
 * **[Code of Conduct](CODE_OF_CONDUCT.md)**: Contributor Covenant v2.1 community standards.
 * **[Security Policy](SECURITY.md)**: Responsible disclosure instructions.
+* **[AI Transparency Notice](AI_TRANSPARENCY.md)**: AI co-creation and verification standards.
 
 ---
 
