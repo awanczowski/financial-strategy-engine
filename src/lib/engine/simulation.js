@@ -495,9 +495,9 @@ export const runSimulationEngine = (loanConfig, extraPayments = [], investments 
       totalSocialSecurityIncomeReal,
       payoffMonth,
       payoffDate,
-      payoffString: payoffDate || (payoffMonth 
+      payoffString: payoffMonth 
         ? `Yr ${Math.ceil(payoffMonth / 12)}, Mo ${payoffMonth % 12 === 0 ? 12 : payoffMonth % 12}` 
-        : "Not paid off"),
+        : "Not paid off",
       finalHomeLow: currentHomeValueLow,
       finalHomeMed: currentHomeValueMed,
       finalHomeHigh: currentHomeValueHigh,
