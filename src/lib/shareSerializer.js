@@ -1,5 +1,17 @@
-import { defaultLoanConfig, defaultExtraPayments, defaultInvestments, defaultTaxConfig, defaultStartDate, defaultRetirementDate } from './constants.js';
+import {
+  defaultLoanConfig,
+  defaultExtraPayments,
+  defaultInvestments,
+  defaultTaxConfig,
+  defaultStartDate,
+  defaultRetirementDate
+} from './constants.js';
 
+/**
+ * Encodes the active state payload into a URI-safe Base64 string for URL sharing.
+ * @param {Object} statePayload Current application state containing loanConfig, extraPayments, investments, rateAdjustments, refinances, taxConfig, viewMode.
+ * @returns {string|null} Encoded Base64 string or null on failure.
+ */
 export const encodeScenario = (statePayload) => {
   try {
     const cleanPayload = {
@@ -20,6 +32,11 @@ export const encodeScenario = (statePayload) => {
   }
 };
 
+/**
+ * Decodes a URL scenario Base64 string into a complete application state object.
+ * @param {string} encodedStr Encoded scenario parameter string from URL.
+ * @returns {Object|null} Hydrated state object with fallback defaults, or null if invalid.
+ */
 export const decodeScenario = (encodedStr) => {
   if (!encodedStr) return null;
   try {
@@ -42,6 +59,11 @@ export const decodeScenario = (encodedStr) => {
   }
 };
 
+/**
+ * Generates a full shareable URL pointing to the current scenario.
+ * @param {Object} statePayload Current application state.
+ * @returns {string} Absolute URL containing encoded scenario.
+ */
 export const generateShareableUrl = (statePayload) => {
   const encoded = encodeScenario(statePayload);
   if (!encoded) return window.location.href;
@@ -49,6 +71,11 @@ export const generateShareableUrl = (statePayload) => {
   return `${baseUrl}?scenario=${encoded}`;
 };
 
+/**
+ * Exports current scenario configuration as a downloadable JSON file.
+ * @param {Object} statePayload Current application state.
+ * @param {string} filename Output file name.
+ */
 export const exportScenarioToJson = (statePayload, filename = 'strategy-scenario.json') => {
   try {
     const cleanPayload = {
@@ -76,6 +103,11 @@ export const exportScenarioToJson = (statePayload, filename = 'strategy-scenario
   }
 };
 
+/**
+ * Imports and validates scenario payload from raw JSON string or object.
+ * @param {string|Object} jsonContent JSON text or parsed object.
+ * @returns {Object|null} Validated scenario state object or null if parsing fails.
+ */
 export const importScenarioFromJson = (jsonContent) => {
   try {
     const parsed = typeof jsonContent === 'string' ? JSON.parse(jsonContent) : jsonContent;
@@ -94,6 +126,9 @@ export const importScenarioFromJson = (jsonContent) => {
   }
 };
 
+/**
+ * Pre-configured financial strategy templates for instant scenario modeling.
+ */
 export const presetScenarios = {
   balanced: {
     name: 'Balanced Growth & Mortgage',
@@ -104,9 +139,11 @@ export const presetScenarios = {
         { id: 1, amount: 500, frequency: 1, startDate: defaultStartDate }
       ],
       investments: [
-        { id: 1, amount: 500, frequency: 1, startDate: defaultStartDate }
+        { id: 1, amount: 500, frequency: 1, startDate: defaultStartDate, accountType: 'TAXABLE' }
       ],
       rateAdjustments: [],
+      refinances: [],
+      taxConfig: { ...defaultTaxConfig },
       viewMode: 'nominal'
     }
   },
@@ -123,9 +160,11 @@ export const presetScenarios = {
         { id: 1, amount: 1200, frequency: 1, startDate: defaultStartDate }
       ],
       investments: [
-        { id: 1, amount: 200, frequency: 1, startDate: defaultStartDate }
+        { id: 1, amount: 200, frequency: 1, startDate: defaultStartDate, accountType: 'TAXABLE' }
       ],
       rateAdjustments: [],
+      refinances: [],
+      taxConfig: { ...defaultTaxConfig },
       viewMode: 'nominal'
     }
   },
@@ -145,10 +184,40 @@ export const presetScenarios = {
       },
       extraPayments: [],
       investments: [
-        { id: 1, amount: 1500, frequency: 1, startDate: defaultStartDate }
+        { id: 1, amount: 1500, frequency: 1, startDate: defaultStartDate, accountType: 'TAX_DEFERRED' }
       ],
       rateAdjustments: [],
+      refinances: [],
+      taxConfig: { ...defaultTaxConfig },
       viewMode: 'real'
+    }
+  },
+  tax_shield_strategy: {
+    name: 'Tax-Shielded Wealth Strategy',
+    description: 'Multi-bucket portfolio (Pre-Tax 401k & Roth IRA) coupled with active Tax Engine, property tax deduction, and MID shield.',
+    data: {
+      loanConfig: {
+        ...defaultLoanConfig,
+        principal: 650000,
+        mortgageRate: 6.875
+      },
+      extraPayments: [],
+      investments: [
+        { id: 1, amount: 800, frequency: 1, startDate: defaultStartDate, accountType: 'TAX_DEFERRED' },
+        { id: 2, amount: 500, frequency: 1, startDate: defaultStartDate, accountType: 'TAX_FREE' }
+      ],
+      rateAdjustments: [],
+      refinances: [],
+      taxConfig: {
+        ...defaultTaxConfig,
+        enableTaxEngine: true,
+        jurisdiction: 'NY_NYC',
+        filingStatus: 'MFJ',
+        currentMarginalRate: 34.7,
+        annualPropertyTax: 14000,
+        saltCapLimit: '10000'
+      },
+      viewMode: 'nominal'
     }
   }
 };

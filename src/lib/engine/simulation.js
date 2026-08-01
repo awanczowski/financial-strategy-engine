@@ -1,5 +1,20 @@
 import { calculateStandardPayment, getMonthOffset } from './math.js';
 
+/**
+ * Runs deterministic month-by-month financial strategy simulation.
+ * Computes mortgage amortization, extra principal paydowns, bi-weekly accelerated payments,
+ * refinance breakeven points, multi-bucket investment compounding (Taxable, Pre-Tax, Roth),
+ * accumulation tax drag, retirement decumulation waterfalls with pre-tax gross-ups,
+ * and itemized Mortgage Interest Deduction (MID) & SALT tax shields.
+ * 
+ * @param {Object} loanConfig Primary mortgage parameters (principal, rate, term, simulationYears, initialInvestment, initialHomeValue, etc.).
+ * @param {Array} extraPayments Array of extra principal payment objects ({ id, amount, frequency, startDate }).
+ * @param {Array} investments Array of ongoing investment objects ({ id, amount, frequency, startDate, accountType }).
+ * @param {Array} rateAdjustments Array of ARM/rate change objects ({ id, rate, startDate }).
+ * @param {Array} refinances Array of mortgage refinance objects ({ id, newRate, newTermYears, closingCosts, startDate }).
+ * @param {Object} taxConfig Tax Strategy Engine settings (enableTaxEngine, jurisdiction, filingStatus, marginal rate, SALT cap, etc.).
+ * @returns {Object} Simulation output object containing scheduleData, initialBreakdown, monthContributions, and summary data.
+ */
 export const runSimulationEngine = (loanConfig, extraPayments = [], investments = [], rateAdjustments = [], refinances = [], taxConfig = {}) => {
   const loanMonths = (Number(loanConfig.years) || 0) * 12;
   const simulationMonths = (Number(loanConfig.simulationYears) || 0) * 12;
