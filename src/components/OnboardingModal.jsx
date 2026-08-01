@@ -199,10 +199,10 @@ export default function OnboardingModal({ show, onClose }) {
             </p>
 
             {/* Financial Tip Box */}
-            <div className="p-3 bg-light border border-dark mb-4">
-              <div className="d-flex align-items-start gap-2">
-                <span className="fw-bold text-black">💡 Strategy Tip:</span>
-                <span className="small text-muted">{currentStep.tip}</span>
+            <div className="p-3 bg-light border border-dark mb-4 w-100">
+              <div className="d-flex align-items-baseline gap-2">
+                <span className="scandi-label text-black fw-bold text-nowrap flex-shrink-0">Strategy Tip:</span>
+                <span className="small text-muted lh-sm">{currentStep.tip}</span>
               </div>
             </div>
 
