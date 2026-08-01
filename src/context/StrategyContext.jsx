@@ -168,7 +168,8 @@ export function StrategyProvider({ children }) {
   const updateStrategy = (id, field, value, setter) => {
     setter(prev => prev.map(item => {
       if (item.id === id) {
-        const val = (field === 'startDate') ? value : (value === '' ? '' : Number(value));
+        const isStringField = field === 'startDate' || field === 'accountType';
+        const val = isStringField ? value : (value === '' ? '' : (isNaN(Number(value)) ? value : Number(value)));
         return { ...item, [field]: val };
       }
       return item;
