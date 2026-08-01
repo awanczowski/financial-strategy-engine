@@ -43,9 +43,17 @@ export const runSimulationEngine = (loanConfig, extraPayments = [], investments 
   const capitalGainsRate = (Number(taxConfig.capitalGainsRate) || 0) / 100;
   const dividendYieldRate = (Number(taxConfig.dividendYieldRate) || 0) / 100;
   const annualPropertyTax = Number(taxConfig.annualPropertyTax) || 0;
-  const saltCapLimit = taxConfig.saltCapLimit === 'UNLIMITED' ? Infinity : (Number(taxConfig.saltCapLimit) || 10000);
+  const stateTaxAmount = Number(taxConfig.stateTaxAmount) || 0;
+  let saltCapLimit;
+  if (taxConfig.saltCapLimit === 'UNLIMITED') {
+    saltCapLimit = Infinity;
+  } else if (taxConfig.saltCapLimit === 'CUSTOM') {
+    saltCapLimit = Number(taxConfig.customSaltCap) || 0;
+  } else {
+    saltCapLimit = Number(taxConfig.saltCapLimit) || 10000;
+  }
   const standardDeduction = taxConfig.filingStatus === 'SINGLE' ? 15000 : 30000;
-  const customCharitable = Number(taxConfig.customCharitable) || 0;
+  const otherItemizedDeductions = Number(taxConfig.otherItemizedDeductions) || Number(taxConfig.customCharitable) || 0;
   const initialPrincipal = Number(loanConfig.principal) || 0;
 
   let taxableMed = Number(loanConfig.initialInvestment) || 0;
@@ -332,8 +340,9 @@ export const runSimulationEngine = (loanConfig, extraPayments = [], investments 
       if (enableTaxEngine) {
         const midRatio = initialPrincipal > 750000 ? (750000 / initialPrincipal) : 1.0;
         const eligibleMidInterest = yearInterestForMID * midRatio;
-        const itemizedSalt = Math.min(annualPropertyTax, saltCapLimit);
-        const totalItemized = itemizedSalt + eligibleMidInterest + customCharitable;
+        const totalSalt = annualPropertyTax + stateTaxAmount;
+        const itemizedSalt = Math.min(totalSalt, saltCapLimit);
+        const totalItemized = itemizedSalt + eligibleMidInterest + otherItemizedDeductions;
         const netItemizedOverStandard = Math.max(0, totalItemized - standardDeduction);
         const annualTaxSavings = netItemizedOverStandard * currentMarginalRate;
         totalMidTaxSavings += annualTaxSavings;

@@ -76,4 +76,34 @@ describe('Tax Engine Integration & Math', () => {
     expect(stdRes.summary.taxSummary.totalMidTaxSavings).toBeGreaterThan(0);
     expect(jumboRes.summary.taxSummary.totalMidTaxSavings).toBeGreaterThan(0);
   });
+
+  it('respects custom SALT cap limit and includes state tax & custom itemized deductions', () => {
+    const cappedConfig = {
+      ...defaultTaxConfig,
+      enableTaxEngine: true,
+      currentMarginalRate: 35.0,
+      annualPropertyTax: 12000,
+      stateTaxAmount: 8000,
+      saltCapLimit: '10000',
+      filingStatus: 'MFJ'
+    };
+
+    const customCapConfig = {
+      ...defaultTaxConfig,
+      enableTaxEngine: true,
+      currentMarginalRate: 35.0,
+      annualPropertyTax: 12000,
+      stateTaxAmount: 8000,
+      saltCapLimit: 'CUSTOM',
+      customSaltCap: 25000,
+      otherItemizedDeductions: 10000, // Charitable
+      filingStatus: 'MFJ'
+    };
+
+    const cappedRes = runSimulationEngine(defaultLoanConfig, [], [], [], [], cappedConfig);
+    const customRes = runSimulationEngine(defaultLoanConfig, [], [], [], [], customCapConfig);
+
+    expect(customRes.summary.taxSummary.totalMidTaxSavings).toBeGreaterThan(cappedRes.summary.taxSummary.totalMidTaxSavings);
+  });
 });
+

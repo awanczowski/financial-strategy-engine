@@ -49,8 +49,11 @@ export const defaultTaxConfig = {
   capitalGainsRate: 15.0,
   dividendYieldRate: 2.0,
   annualPropertyTax: 12000,
-  saltCapLimit: 10000, // 10000, 20000, 'UNLIMITED', or custom number
-  customCharitable: 0
+  stateTaxAmount: 0,
+  saltCapLimit: '10000', // '10000', '20000', '5000', 'UNLIMITED', 'CUSTOM'
+  customSaltCap: 10000,
+  otherItemizedDeductions: 0 // Charitable, medical, & other itemized deductions
 };
+
 
 

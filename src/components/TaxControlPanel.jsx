@@ -1,6 +1,8 @@
 import React from 'react';
 
 export default function TaxControlPanel({ taxConfig, handleTaxConfigChange }) {
+  const isCustomSalt = taxConfig.saltCapLimit === 'CUSTOM';
+
   return (
     <div className="card p-3 mb-4 border-dark bg-white shadow-sm">
       <div className="d-flex align-items-center justify-content-between border-bottom border-dark pb-2 mb-3">
@@ -64,14 +66,32 @@ export default function TaxControlPanel({ taxConfig, handleTaxConfigChange }) {
             <input name="annualPropertyTax" type="number" step="500" className="form-control scandi-input border-dark" value={taxConfig.annualPropertyTax} onChange={handleTaxConfigChange} />
           </div>
 
-          <div className="col-sm-6 col-md-6">
+          <div className="col-sm-6 col-md-4">
+            <label className="form-label scandi-label">Annual State Income Tax ($)</label>
+            <input name="stateTaxAmount" type="number" step="500" className="form-control scandi-input border-dark" value={taxConfig.stateTaxAmount || 0} onChange={handleTaxConfigChange} />
+          </div>
+
+          <div className="col-sm-6 col-md-4">
             <label className="form-label scandi-label">SALT Deduction Cap ($)</label>
             <select name="saltCapLimit" className="form-select scandi-input border-dark" value={taxConfig.saltCapLimit} onChange={handleTaxConfigChange}>
               <option value="10000">$10,000 (Standard TCJA Cap)</option>
               <option value="20000">$20,000 (Adjusted Proposal)</option>
-              <option value="UNLIMITED">Unlimited / Pre-2018 (PTET)</option>
               <option value="5000">$5,000 (Single Cap)</option>
+              <option value="UNLIMITED">Unlimited / Pre-2018 (PTET)</option>
+              <option value="CUSTOM">Custom Amount...</option>
             </select>
+          </div>
+
+          {isCustomSalt && (
+            <div className="col-sm-6 col-md-4">
+              <label className="form-label scandi-label">Custom SALT Cap ($)</label>
+              <input name="customSaltCap" type="number" step="500" className="form-control scandi-input border-dark" value={taxConfig.customSaltCap} onChange={handleTaxConfigChange} />
+            </div>
+          )}
+
+          <div className="col-sm-6 col-md-4">
+            <label className="form-label scandi-label">Other Itemized Deductions ($)</label>
+            <input name="otherItemizedDeductions" type="number" step="500" className="form-control scandi-input border-dark" value={taxConfig.otherItemizedDeductions || 0} onChange={handleTaxConfigChange} placeholder="Charitable, etc." />
           </div>
         </div>
       )}
