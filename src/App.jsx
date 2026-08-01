@@ -7,6 +7,7 @@ import ChartSection from './components/ChartSection.jsx';
 import AmortizationTable from './components/AmortizationTable.jsx';
 import MonteCarloModal from './components/MonteCarloModal.jsx';
 import ShareModal from './components/ShareModal.jsx';
+import Footer from './components/Footer.jsx';
 import { StrategyProvider } from './context/StrategyContext.jsx';
 import { useStrategy } from './context/useStrategy.js';
 
@@ -144,10 +145,8 @@ function MainContent() {
         {/* Amortization Table */}
         <AmortizationTable scheduleData={activeScheduleData} />
 
-        {/* Legal Disclaimer */}
-        <footer className="mt-5 pt-4 border-top border-dark text-muted small" style={{ lineHeight: '1.6' }}>
-          <strong>Disclaimer:</strong> The information, projections, and calculations provided by this application are for educational and informational purposes only and do not constitute financial, investment, legal, or tax advice. Projections are inherently hypothetical, based entirely on user inputs and assumed constant rates of return, which are not guaranteed. Actual market conditions, variable interest rates, compounding discrepancies, inflation, and tax implications will vary over time and may significantly alter these figures. You should not make any financial or investment decisions based solely on this tool. Please consult with a qualified, licensed financial advisor or legal professional before making any major financial decisions or entering into any binding agreements.
-        </footer>
+        {/* Footer with Open Source Banner, GitHub Repository Link, and Legal Disclaimer */}
+        <Footer />
 
       </main>
     </div>
