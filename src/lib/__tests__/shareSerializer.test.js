@@ -76,10 +76,20 @@ describe('shareSerializer', () => {
     expect(presetScenarios.aggressive_paydown).toBeDefined();
     expect(presetScenarios.fire_retirement).toBeDefined();
     expect(presetScenarios.tax_shield_strategy).toBeDefined();
+    expect(presetScenarios.refinance_rate_drop).toBeDefined();
+    expect(presetScenarios.biweekly_roth_ladder).toBeDefined();
 
     const taxPreset = presetScenarios.tax_shield_strategy.data;
     expect(taxPreset.taxConfig.enableTaxEngine).toBe(true);
     expect(taxPreset.taxConfig.jurisdiction).toBe('NY_NYC');
     expect(taxPreset.investments).toHaveLength(2);
+
+    const refPreset = presetScenarios.refinance_rate_drop.data;
+    expect(refPreset.refinances).toHaveLength(1);
+    expect(refPreset.refinances[0].newRate).toBe(4.75);
+
+    const biweeklyPreset = presetScenarios.biweekly_roth_ladder.data;
+    expect(biweeklyPreset.loanConfig.isBiweekly).toBe(true);
+    expect(biweeklyPreset.loanConfig.divertAfterPayoff).toBe(true);
   });
 });
