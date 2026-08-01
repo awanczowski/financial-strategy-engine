@@ -18,10 +18,13 @@ describe('App Component', () => {
     expect(screen.getByText('Final Net Worth')).toBeInTheDocument();
   });
 
-  it('renders parameter panel controls', () => {
+  it('renders parameter panel controls including Mortgage Refinances section', () => {
     render(<App />);
     expect(screen.getByText('Real Estate & Mortgage')).toBeInTheDocument();
     expect(screen.getByText('Wealth & Investing')).toBeInTheDocument();
+    expect(screen.getByText('Mortgage Refinances')).toBeInTheDocument();
+    expect(screen.getByText('+ Add Refinance')).toBeInTheDocument();
   });
 });
+
 

@@ -20,6 +20,8 @@ function MainContent() {
     setInvestments,
     rateAdjustments,
     setRateAdjustments,
+    refinances,
+    setRefinances,
     addStrategy,
     removeStrategy,
     updateStrategy,
@@ -122,6 +124,8 @@ function MainContent() {
           setInvestments={setInvestments}
           rateAdjustments={rateAdjustments}
           setRateAdjustments={setRateAdjustments}
+          refinances={refinances}
+          setRefinances={setRefinances}
           addStrategy={addStrategy}
           removeStrategy={removeStrategy}
           updateStrategy={updateStrategy}

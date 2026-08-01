@@ -75,4 +75,25 @@ describe('runSimulationEngine', () => {
     // With inflation escalation, overall nominal withdrawals will be higher over time
     expect(resWithInfl.summary.totalWithdrawnOverall).toBeGreaterThan(resNoInfl.summary.totalWithdrawnOverall);
   });
+
+  it('handles mortgage refinance events correctly', () => {
+    const refinances = [
+      { id: 101, startDate: "2031-08-01", newRate: 4.5, newTermYears: 30, closingCosts: 5000 }
+    ];
+
+    const baseline = runSimulationEngine(defaultLoanConfig, [], [], [], []);
+    const withRefinance = runSimulationEngine(defaultLoanConfig, [], [], [], refinances);
+
+    expect(withRefinance.summary.refinanceEvents).toHaveLength(1);
+    const refEvent = withRefinance.summary.refinanceEvents[0];
+
+    expect(refEvent.closingCosts).toBe(5000);
+    expect(refEvent.newRate).toBe(4.5);
+    expect(refEvent.newTermYears).toBe(30);
+    expect(refEvent.monthlyInterestSavings).toBeGreaterThan(0);
+    expect(refEvent.breakevenMonthsInterest).toBeGreaterThan(0);
+    expect(refEvent.newPayment).toBeLessThan(refEvent.oldPayment);
+    expect(withRefinance.summary.totalInterestPaid).toBeLessThan(baseline.summary.totalInterestPaid);
+  });
 });
+

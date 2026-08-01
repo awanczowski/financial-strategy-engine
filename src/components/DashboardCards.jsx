@@ -59,6 +59,63 @@ export default function DashboardCards({ initialBreakdown, summary }) {
         </div>
       </div>
 
+      {/* Refinance Breakeven Analysis Card */}
+      {summary?.refinanceEvents && summary.refinanceEvents.length > 0 && (
+        <div className="row g-4 mb-4">
+          <div className="col-12">
+            <div className="card dashboard-card bg-white">
+              <div className="card-body p-4">
+                <h6 className="card-subtitle mb-3 scandi-label text-black border-bottom border-dark pb-2">Refinance Event & Breakeven Analysis</h6>
+                <div className="row g-3">
+                  {summary.refinanceEvents.map((ref, idx) => (
+                    <div key={ref.id || idx} className="col-md-6 col-lg-4 border-end border-light">
+                      <div className="p-2">
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                          <span className="badge bg-dark text-white font-monospace">{ref.startDate}</span>
+                          <span className="small text-muted fw-bold">Month {ref.month}</span>
+                        </div>
+                        <div className="d-flex justify-content-between mb-1">
+                          <span className="text-muted small">New Rate / Term:</span>
+                          <span className="fw-bold">{ref.newRate}% ({ref.newTermYears} yrs)</span>
+                        </div>
+                        <div className="d-flex justify-content-between mb-1">
+                          <span className="text-muted small">Closing Costs (into Principal):</span>
+                          <span className="fw-bold text-danger">+{formatCurrency(ref.closingCosts)}</span>
+                        </div>
+                        <div className="d-flex justify-content-between mb-1">
+                          <span className="text-muted small">New Payment:</span>
+                          <span className="fw-bold">{formatCurrency(ref.newPayment)}</span>
+                        </div>
+                        <div className="d-flex justify-content-between mb-1">
+                          <span className="text-muted small">Monthly Payment Impact:</span>
+                          <span className={ref.monthlyPaymentSavings >= 0 ? "fw-bold text-success" : "fw-bold text-danger"}>
+                            {ref.monthlyPaymentSavings >= 0 ? `-${formatCurrency(ref.monthlyPaymentSavings)}/mo` : `+${formatCurrency(Math.abs(ref.monthlyPaymentSavings))}/mo`}
+                          </span>
+                        </div>
+                        <div className="d-flex justify-content-between mb-1">
+                          <span className="text-muted small">Monthly Interest Saved:</span>
+                          <span className={ref.monthlyInterestSavings >= 0 ? "fw-bold text-success" : "fw-bold text-danger"}>
+                            {ref.monthlyInterestSavings >= 0 ? `${formatCurrency(ref.monthlyInterestSavings)}/mo` : `-${formatCurrency(Math.abs(ref.monthlyInterestSavings))}/mo`}
+                          </span>
+                        </div>
+                        <div className="d-flex justify-content-between mt-2 pt-2 border-top border-dark align-items-center">
+                          <span className="text-black small fw-bold text-uppercase">Breakeven Point:</span>
+                          <span className="fw-bolder text-black">
+                            {ref.breakevenMonthsInterest 
+                              ? `${ref.breakevenMonthsInterest.toFixed(1)} mos (${ref.breakevenYearsInterest.toFixed(1)} yrs)`
+                              : 'No Interest Savings'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="row g-4 mb-5">
         <div className="col-md-4">
           <div className="card dashboard-card bg-white h-100">

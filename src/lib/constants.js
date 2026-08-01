@@ -37,3 +37,6 @@ export const defaultExtraPayments = [
 export const defaultInvestments = [
   { id: 1, amount: 500, frequency: 1, startDate: defaultStartDate }
 ];
+
+export const defaultRefinances = [];
+
