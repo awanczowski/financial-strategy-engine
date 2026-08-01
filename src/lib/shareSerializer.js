@@ -3,13 +3,14 @@ import {
   defaultExtraPayments,
   defaultInvestments,
   defaultTaxConfig,
+  defaultSocialSecurityConfig,
   defaultStartDate,
   defaultRetirementDate
 } from './constants.js';
 
 /**
  * Encodes the active state payload into a URI-safe Base64 string for URL sharing.
- * @param {Object} statePayload Current application state containing loanConfig, extraPayments, investments, rateAdjustments, refinances, taxConfig, viewMode.
+ * @param {Object} statePayload Current application state containing loanConfig, extraPayments, investments, rateAdjustments, refinances, taxConfig, socialSecurityConfig, viewMode.
  * @returns {string|null} Encoded Base64 string or null on failure.
  */
 export const encodeScenario = (statePayload) => {
@@ -22,6 +23,7 @@ export const encodeScenario = (statePayload) => {
       rateAdjustments: statePayload.rateAdjustments || [],
       refinances: statePayload.refinances || [],
       taxConfig: statePayload.taxConfig || defaultTaxConfig,
+      socialSecurityConfig: statePayload.socialSecurityConfig || defaultSocialSecurityConfig,
       viewMode: statePayload.viewMode || 'nominal'
     };
     const jsonStr = JSON.stringify(cleanPayload);
@@ -52,6 +54,7 @@ export const decodeScenario = (encodedStr) => {
       rateAdjustments: Array.isArray(parsed.rateAdjustments) ? parsed.rateAdjustments : [],
       refinances: Array.isArray(parsed.refinances) ? parsed.refinances : [],
       taxConfig: { ...defaultTaxConfig, ...(parsed.taxConfig || {}) },
+      socialSecurityConfig: { ...defaultSocialSecurityConfig, ...(parsed.socialSecurityConfig || {}) },
       viewMode: parsed.viewMode === 'real' ? 'real' : 'nominal'
     };
   } catch (e) {
@@ -87,6 +90,7 @@ export const exportScenarioToJson = (statePayload, filename = 'strategy-scenario
       rateAdjustments: statePayload.rateAdjustments || [],
       refinances: statePayload.refinances || [],
       taxConfig: statePayload.taxConfig || defaultTaxConfig,
+      socialSecurityConfig: statePayload.socialSecurityConfig || defaultSocialSecurityConfig,
       viewMode: statePayload.viewMode || 'nominal'
     };
     const blob = new Blob([JSON.stringify(cleanPayload, null, 2)], { type: 'application/json' });
@@ -119,6 +123,7 @@ export const importScenarioFromJson = (jsonContent) => {
       rateAdjustments: Array.isArray(parsed.rateAdjustments) ? parsed.rateAdjustments : [],
       refinances: Array.isArray(parsed.refinances) ? parsed.refinances : [],
       taxConfig: { ...defaultTaxConfig, ...(parsed.taxConfig || {}) },
+      socialSecurityConfig: { ...defaultSocialSecurityConfig, ...(parsed.socialSecurityConfig || {}) },
       viewMode: parsed.viewMode === 'real' ? 'real' : 'nominal'
     };
   } catch (e) {

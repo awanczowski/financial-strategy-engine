@@ -43,6 +43,14 @@ export const TOUR_STEPS = [
   },
   {
     step: 6,
+    title: 'Social Security & Retirement Decumulation',
+    subtitle: 'Self & Spouse Income Floor and Portfolio Offsets',
+    description: 'Configure Self and Spouse Social Security claim start dates, estimated monthly benefits, and annual COLA adjustments. Guaranteed Social Security income reduces required portfolio decumulation withdrawals dollar-for-dollar.',
+    tip: 'Social Security provides a guaranteed income floor that drastically reduces portfolio depletion risk during retirement.',
+    badge: 'Social Security'
+  },
+  {
+    step: 7,
     title: 'Real vs. Nominal Dollar Analysis',
     subtitle: 'Purchasing Power Inflation Discounting',
     description: 'Toggle between Nominal Future Dollars and Real Purchasing Power. Real mode discounts future nominal figures using your estimated inflation rate (e.g. 2.5% per year).',
@@ -50,15 +58,15 @@ export const TOUR_STEPS = [
     badge: 'Analysis Mode'
   },
   {
-    step: 7,
+    step: 8,
     title: 'Monte Carlo Stress Testing',
     subtitle: 'Sequence-of-Return Risk & Survival Probabilities',
-    description: 'Run thousands of randomized market return simulations using lognormal return distributions. Stress-test your portfolio across volatile market cycles over 55-year horizons.',
+    description: 'Run thousands of randomized market return simulations using lognormal return distributions. Stress-test your portfolio across volatile market cycles over 55-year horizons with Social Security cash flows included.',
     tip: 'Straight-line average returns ignore market drops. Monte Carlo calculates your true statistical probability of success.',
     badge: 'Stress Testing'
   },
   {
-    step: 8,
+    step: 9,
     title: 'Share Scenarios & Built-in Templates',
     subtitle: 'Base64 Share Links, JSON Export & Strategy Gallery',
     description: 'Generate Base64 encoded share URLs to save or send your strategy, export JSON configuration files, or load 6 pre-configured templates (FIRE, Tax-Shielded, Refinance Drop, Bi-Weekly Roth).',

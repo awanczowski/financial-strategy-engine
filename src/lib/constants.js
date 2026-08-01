@@ -55,5 +55,15 @@ export const defaultTaxConfig = {
   otherItemizedDeductions: 0 // Charitable, medical, & other itemized deductions
 };
 
+export const defaultSocialSecurityConfig = {
+  enableSocialSecurity: false,
+  selfMonthlyBenefit: 2400,
+  selfStartDate: defaultRetirementDate,
+  enableSpouseSS: false,
+  spouseMonthlyBenefit: 1800,
+  spouseStartDate: defaultRetirementDate,
+  annualColaRate: 2.5
+};
+
 
 

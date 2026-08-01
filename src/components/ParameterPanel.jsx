@@ -3,6 +3,7 @@ import StrategyRow from './StrategyRow.jsx';
 import RateAdjustmentRow from './RateAdjustmentRow.jsx';
 import RefinanceRow from './RefinanceRow.jsx';
 import TaxControlPanel from './TaxControlPanel.jsx';
+import SocialSecurityControlPanel from './SocialSecurityControlPanel.jsx';
 import InfoTooltip from './InfoTooltip.jsx';
 import { defaultStartDate } from '../lib/constants.js';
 
@@ -19,6 +20,8 @@ export default function ParameterPanel({
   setRefinances,
   taxConfig,
   handleTaxConfigChange,
+  socialSecurityConfig,
+  handleSocialSecurityConfigChange,
   addStrategy,
   removeStrategy,
   updateStrategy,
@@ -284,6 +287,16 @@ export default function ParameterPanel({
                         Stop all new contributions at retirement
                       </label>
                     </div>
+                  </div>
+
+                  {/* Social Security & Pension Sub-Panel */}
+                  <div className="col-12 mt-3 border-top border-light pt-3">
+                    {socialSecurityConfig && (
+                      <SocialSecurityControlPanel 
+                        socialSecurityConfig={socialSecurityConfig} 
+                        handleSocialSecurityConfigChange={handleSocialSecurityConfigChange} 
+                      />
+                    )}
                   </div>
                   
                   {/* MONTE CARLO TRIGGER */}

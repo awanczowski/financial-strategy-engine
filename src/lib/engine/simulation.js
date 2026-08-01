@@ -13,9 +13,10 @@ import { calculateStandardPayment, getMonthOffset } from './math.js';
  * @param {Array} rateAdjustments Array of ARM/rate change objects ({ id, rate, startDate }).
  * @param {Array} refinances Array of mortgage refinance objects ({ id, newRate, newTermYears, closingCosts, startDate }).
  * @param {Object} taxConfig Tax Strategy Engine settings (enableTaxEngine, jurisdiction, filingStatus, marginal rate, SALT cap, etc.).
+ * @param {Object} socialSecurityConfig Social Security Engine settings (enableSocialSecurity, selfMonthlyBenefit, selfStartDate, enableSpouseSS, spouseMonthlyBenefit, spouseStartDate, annualColaRate).
  * @returns {Object} Simulation output object containing scheduleData, initialBreakdown, monthContributions, and summary data.
  */
-export const runSimulationEngine = (loanConfig, extraPayments = [], investments = [], rateAdjustments = [], refinances = [], taxConfig = {}) => {
+export const runSimulationEngine = (loanConfig, extraPayments = [], investments = [], rateAdjustments = [], refinances = [], taxConfig = {}, socialSecurityConfig = {}) => {
   const loanMonths = (Number(loanConfig.years) || 0) * 12;
   const simulationMonths = (Number(loanConfig.simulationYears) || 0) * 12;
   const isBiweekly = loanConfig.isBiweekly;
@@ -71,6 +72,23 @@ export const runSimulationEngine = (loanConfig, extraPayments = [], investments 
   const otherItemizedDeductions = Number(taxConfig.otherItemizedDeductions) || Number(taxConfig.customCharitable) || 0;
   const initialPrincipal = Number(loanConfig.principal) || 0;
 
+  // Social Security Engine Configuration
+  const enableSocialSecurity = Boolean(socialSecurityConfig.enableSocialSecurity);
+  const selfMonthlyBenefit = Number(socialSecurityConfig.selfMonthlyBenefit) || 0;
+  const selfStartMonth = (enableSocialSecurity && socialSecurityConfig.selfStartDate) 
+    ? getMonthOffset(baseDate, socialSecurityConfig.selfStartDate) 
+    : Infinity;
+  
+  const enableSpouseSS = Boolean(socialSecurityConfig.enableSpouseSS);
+  const spouseMonthlyBenefit = Number(socialSecurityConfig.spouseMonthlyBenefit) || 0;
+  const spouseStartMonth = (enableSocialSecurity && enableSpouseSS && socialSecurityConfig.spouseStartDate) 
+    ? getMonthOffset(baseDate, socialSecurityConfig.spouseStartDate) 
+    : Infinity;
+
+  const ssColaAnnual = (Number(socialSecurityConfig.annualColaRate) || 0) / 100;
+  let totalSocialSecurityIncome = 0;
+  let totalSocialSecurityIncomeReal = 0;
+
   let taxableMed = Number(loanConfig.initialInvestment) || 0;
   let taxDeferredMed = 0;
   let taxFreeMed = 0;
@@ -86,11 +104,13 @@ export const runSimulationEngine = (loanConfig, extraPayments = [], investments 
   let yearInterestPaid = 0;
   let yearInvestContributed = 0;
   let yearWithdrawn = 0;
+  let yearSocialSecurity = 0;
 
   let yearMortgagePaidReal = 0;
   let yearInterestPaidReal = 0;
   let yearInvestContributedReal = 0;
   let yearWithdrawnReal = 0;
+  let yearSocialSecurityReal = 0;
 
   let totalInterestPaid = 0;
   let totalInvestContributed = 0;
@@ -254,6 +274,32 @@ export const runSimulationEngine = (loanConfig, extraPayments = [], investments 
     let withdrawalLow = 0, withdrawalMed = 0, withdrawalHigh = 0;
     let actualWithdrawnMed = 0; 
 
+    // Calculate Social Security monthly benefits for Self & Spouse with COLA compounding from base date
+    const yearsFromBase = Math.floor((month - 1) / 12);
+    let selfSSInMonth = 0;
+    if (enableSocialSecurity && month >= selfStartMonth) {
+      selfSSInMonth = selfMonthlyBenefit * Math.pow(1 + ssColaAnnual, yearsFromBase);
+    }
+
+    let spouseSSInMonth = 0;
+    if (enableSocialSecurity && enableSpouseSS && month >= spouseStartMonth) {
+      spouseSSInMonth = spouseMonthlyBenefit * Math.pow(1 + ssColaAnnual, yearsFromBase);
+    }
+
+    const totalSSInMonth = selfSSInMonth + spouseSSInMonth;
+    if (totalSSInMonth > 0) {
+      totalSocialSecurityIncome += totalSSInMonth;
+      totalSocialSecurityIncomeReal += totalSSInMonth * discountFactor;
+      yearSocialSecurity += totalSSInMonth;
+      yearSocialSecurityReal += totalSSInMonth * discountFactor;
+
+      if (!isRetired) {
+        // Pre-retirement Social Security income adds to liquid investments
+        investContributionThisMonth += totalSSInMonth;
+        taxableContribThisMonth += totalSSInMonth;
+      }
+    }
+
     if (isRetired) {
       // Annual COLA escalation for fixed and locked percentage withdrawals every 12 months in retirement
       const monthsInRetirement = month - retirementStartMonth;
@@ -285,6 +331,22 @@ export const runSimulationEngine = (loanConfig, extraPayments = [], investments 
         withdrawalLow = (currentInvestmentLow * pullRateAnnual) / 12;
         withdrawalMed = (currentInvestmentMed * pullRateAnnual) / 12;
         withdrawalHigh = (currentInvestmentHigh * pullRateAnnual) / 12;
+      }
+
+      // Apply Social Security offset to required portfolio withdrawals
+      if (totalSSInMonth > 0) {
+        if (totalSSInMonth >= withdrawalMed) {
+          const excessSS = totalSSInMonth - withdrawalMed;
+          investContributionThisMonth += excessSS;
+          taxableContribThisMonth += excessSS;
+          withdrawalMed = 0;
+          withdrawalLow = Math.max(0, withdrawalLow - totalSSInMonth);
+          withdrawalHigh = Math.max(0, withdrawalHigh - totalSSInMonth);
+        } else {
+          withdrawalMed -= totalSSInMonth;
+          withdrawalLow = Math.max(0, withdrawalLow - totalSSInMonth);
+          withdrawalHigh = Math.max(0, withdrawalHigh - totalSSInMonth);
+        }
       }
 
       // Prevent ghost withdrawals tracking if the portfolio hits zero
@@ -381,6 +443,8 @@ export const runSimulationEngine = (loanConfig, extraPayments = [], investments 
         interestPaid: yearInterestPaid,
         investContributed: yearInvestContributed,
         withdrawn: yearWithdrawn,
+        socialSecurity: yearSocialSecurity,
+        totalIncome: yearWithdrawn + yearSocialSecurity,
         activeRate: currentAnnualRate,
 
         // Real (Discounted to Present Value) equivalents
@@ -395,17 +459,21 @@ export const runSimulationEngine = (loanConfig, extraPayments = [], investments 
         mortgagePaidReal: yearMortgagePaidReal,
         interestPaidReal: yearInterestPaidReal,
         investContributedReal: yearInvestContributedReal,
-        withdrawnReal: yearWithdrawnReal
+        withdrawnReal: yearWithdrawnReal,
+        socialSecurityReal: yearSocialSecurityReal,
+        totalIncomeReal: yearWithdrawnReal + yearSocialSecurityReal
       });
       
       yearMortgagePaid = 0;
       yearInterestPaid = 0;
       yearInvestContributed = 0;
       yearWithdrawn = 0;
+      yearSocialSecurity = 0;
       yearMortgagePaidReal = 0;
       yearInterestPaidReal = 0;
       yearInvestContributedReal = 0;
       yearWithdrawnReal = 0;
+      yearSocialSecurityReal = 0;
     }
   }
 
@@ -422,6 +490,8 @@ export const runSimulationEngine = (loanConfig, extraPayments = [], investments 
       totalInterestPaidReal,
       totalInvestContributedReal,
       totalWithdrawnOverallReal,
+      totalSocialSecurityIncome,
+      totalSocialSecurityIncomeReal,
       payoffString: payoffMonth 
         ? `Yr ${Math.ceil(payoffMonth / 12)}, Mo ${payoffMonth % 12 === 0 ? 12 : payoffMonth % 12}` 
         : "Not paid off",

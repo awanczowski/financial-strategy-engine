@@ -17,6 +17,7 @@ export default function MonteCarloModal({
   isSimulating,
   results,
   loanConfig,
+  socialSecurityConfig,
   onReRun
 }) {
   const [selectedScenario, setSelectedScenario] = useState('med'); // 'low' | 'med' | 'high'
@@ -133,6 +134,39 @@ export default function MonteCarloModal({
 
             </div>
           </form>
+
+          {/* Social Security Impact Banner */}
+          <div className="p-3 mb-4 bg-light border border-dark d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div className="d-flex align-items-center gap-2">
+              <span className={`badge ${socialSecurityConfig?.enableSocialSecurity ? 'bg-dark text-white' : 'bg-secondary text-white'} scandi-label px-2 py-1`}>
+                {socialSecurityConfig?.enableSocialSecurity ? 'Social Security Active' : 'Social Security Disabled'}
+              </span>
+              <span className="small text-dark fw-bold">
+                {socialSecurityConfig?.enableSocialSecurity ? (
+                  <>
+                    Self: <strong>${(socialSecurityConfig.selfMonthlyBenefit || 0).toLocaleString()}/mo</strong> ({socialSecurityConfig.selfStartDate})
+                    {socialSecurityConfig.enableSpouseSS && (
+                      <span className="ms-2">
+                        | Spouse: <strong>${(socialSecurityConfig.spouseMonthlyBenefit || 0).toLocaleString()}/mo</strong> ({socialSecurityConfig.spouseStartDate})
+                      </span>
+                    )}
+                    <span className="ms-2 text-muted">
+                      ({socialSecurityConfig.annualColaRate || 0}% COLA)
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-muted fw-normal">
+                    Enable Social Security in Retirement Controls to model guaranteed income cash flows and portfolio withdrawal offsets.
+                  </span>
+                )}
+              </span>
+            </div>
+            {socialSecurityConfig?.enableSocialSecurity && (
+              <span className="badge bg-white text-dark border border-dark px-2 py-1 scandi-label">
+                Guaranteed Cash Flow Floor Applied
+              </span>
+            )}
+          </div>
 
           {isSimulating ? (
             <div className="py-5 text-center">
