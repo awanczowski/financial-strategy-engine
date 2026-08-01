@@ -6,7 +6,7 @@ export default function TaxControlPanel({ taxConfig, handleTaxConfigChange }) {
   return (
     <div className="card p-3 mb-4 border-dark bg-white shadow-sm">
       <div className="d-flex align-items-center justify-content-between border-bottom border-dark pb-2 mb-3">
-        <h6 className="scandi-label text-black mb-0 fs-6">🏛️ Tax & Jurisdiction Strategy</h6>
+        <h6 className="scandi-label text-black mb-0 fs-6">Tax & Jurisdiction Strategy</h6>
         <div className="d-flex align-items-center gap-2">
           <input 
             className="scandi-checkbox" 
@@ -31,10 +31,10 @@ export default function TaxControlPanel({ taxConfig, handleTaxConfigChange }) {
           <div className="col-sm-6 col-md-4">
             <label className="form-label scandi-label">Jurisdiction Preset</label>
             <select name="jurisdiction" className="form-select scandi-input border-dark" value={taxConfig.jurisdiction} onChange={handleTaxConfigChange}>
-              <option value="NY_NYC">🗽 New York (NY State + NYC)</option>
-              <option value="CA">🌴 California (CA State)</option>
-              <option value="TX_FL">🤠 Texas / Florida (No State Tax)</option>
-              <option value="CUSTOM">⚙️ Custom Jurisdiction</option>
+              <option value="NY_NYC">New York (NY State + NYC)</option>
+              <option value="CA">California (CA State)</option>
+              <option value="TX_FL">Texas / Florida (No State Tax)</option>
+              <option value="CUSTOM">Custom Jurisdiction</option>
             </select>
           </div>
 

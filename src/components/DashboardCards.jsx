@@ -122,7 +122,7 @@ export default function DashboardCards({ initialBreakdown, summary }) {
           <div className="col-12">
             <div className="card dashboard-card bg-white">
               <div className="card-body p-4">
-                <h6 className="card-subtitle mb-3 scandi-label text-black border-bottom border-dark pb-2">🏛️ Tax Engine & Account Bucket Breakdown</h6>
+                <h6 className="card-subtitle mb-3 scandi-label text-black border-bottom border-dark pb-2">Tax Engine & Account Bucket Breakdown</h6>
                 <div className="row g-3">
                   <div className="col-md-6 col-lg-3 border-end border-light">
                     <div className="p-2">

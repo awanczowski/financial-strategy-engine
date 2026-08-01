@@ -108,7 +108,7 @@ export default function ShareModal({
                 className={`btn ${copied ? 'btn-success' : 'btn-dark'} fw-bold scandi-label px-3`}
                 onClick={handleCopyLink}
               >
-                {copied ? '✓ Copied!' : '📋 Copy Link'}
+                {copied ? 'Copied!' : 'Copy Link'}
               </button>
             </div>
           </div>
@@ -146,11 +146,11 @@ export default function ShareModal({
                 className="btn btn-sm btn-dark fw-bold scandi-label px-3"
                 onClick={handleExportJson}
               >
-                📥 Export Scenario (.json)
+                Export Scenario (.json)
               </button>
 
               <label className="btn btn-sm btn-outline-dark fw-bold scandi-label px-3 m-0 cursor-pointer">
-                📤 Import Scenario (.json)
+                Import Scenario (.json)
                 <input 
                   type="file" 
                   accept=".json" 

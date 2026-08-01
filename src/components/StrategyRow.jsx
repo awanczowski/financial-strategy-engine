@@ -24,9 +24,9 @@ export default function StrategyRow({ item, onUpdate, onRemove, isInvestment = f
           onChange={(e) => onUpdate(item.id, 'accountType', e.target.value)}
           title="Account Bucket"
         >
-          <option value="TAXABLE">🏦 Taxable</option>
-          <option value="TAX_DEFERRED">💼 Pre-Tax</option>
-          <option value="TAX_FREE">🛡️ Roth</option>
+          <option value="TAXABLE">Taxable</option>
+          <option value="TAX_DEFERRED">Pre-Tax (401k/IRA)</option>
+          <option value="TAX_FREE">Tax-Free (Roth)</option>
         </select>
       )}
 
