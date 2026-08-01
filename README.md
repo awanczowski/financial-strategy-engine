@@ -1,5 +1,11 @@
 # Strategy Engine: Paydown vs. Invest Calculator
 
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![CI Status](https://img.shields.io/badge/CI-Passing-brightgreen.svg)](.github/workflows/ci.yml)
+[![React](https://img.shields.io/badge/React-19.0-blue)](package.json)
+[![Vite](https://img.shields.io/badge/Vite-8.2-purple)](package.json)
+[![Test Suite](https://img.shields.io/badge/Tests-27_Passed-success)](src/lib/engine/__tests__/)
+
 ## Overview
 Strategy Engine is a fluid, single-page React application designed to mathematically compare the long-term financial impacts of aggressive mortgage paydown strategies versus compounding market investments. It provides a comprehensive, period-by-period simulation of net worth trajectory, factoring in real estate appreciation, variable interest rates, flexible contribution schedules, multi-bucket tax treatment, refinance events, and a robust retirement withdrawal phase.
 
@@ -76,6 +82,15 @@ npm test
 # Build production bundle
 npm run build
 ```
+
+---
+
+## Contributing & Governance
+
+Contributions are welcome! Please review our community guidelines before submitting pull requests:
+* **[Contributing Guidelines](CONTRIBUTING.md)**: Setup instructions, coding standards, and PR workflows.
+* **[Code of Conduct](CODE_OF_CONDUCT.md)**: Contributor Covenant v2.1 community standards.
+* **[Security Policy](SECURITY.md)**: Responsible disclosure instructions.
 
 ---
 
