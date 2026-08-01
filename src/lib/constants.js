@@ -35,8 +35,22 @@ export const defaultExtraPayments = [
 ];
 
 export const defaultInvestments = [
-  { id: 1, amount: 500, frequency: 1, startDate: defaultStartDate }
+  { id: 1, amount: 500, frequency: 1, startDate: defaultStartDate, accountType: "TAXABLE" }
 ];
 
 export const defaultRefinances = [];
+
+export const defaultTaxConfig = {
+  enableTaxEngine: false,
+  jurisdiction: 'NY_NYC', // 'NY_NYC', 'CA', 'TX_FL', 'CUSTOM'
+  filingStatus: 'MFJ', // 'MFJ' ($30k std ded) | 'SINGLE' ($15k std ded)
+  currentMarginalRate: 34.7,
+  retirementEffectiveRate: 18.0,
+  capitalGainsRate: 15.0,
+  dividendYieldRate: 2.0,
+  annualPropertyTax: 12000,
+  saltCapLimit: 10000, // 10000, 20000, 'UNLIMITED', or custom number
+  customCharitable: 0
+};
+
 

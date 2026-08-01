@@ -2,6 +2,7 @@ import React from 'react';
 import StrategyRow from './StrategyRow.jsx';
 import RateAdjustmentRow from './RateAdjustmentRow.jsx';
 import RefinanceRow from './RefinanceRow.jsx';
+import TaxControlPanel from './TaxControlPanel.jsx';
 import { defaultStartDate } from '../lib/constants.js';
 
 export default function ParameterPanel({
@@ -15,6 +16,8 @@ export default function ParameterPanel({
   setRateAdjustments,
   refinances = [],
   setRefinances,
+  taxConfig,
+  handleTaxConfigChange,
   addStrategy,
   removeStrategy,
   updateStrategy,
@@ -171,11 +174,12 @@ export default function ParameterPanel({
                 <StrategyRow 
                   key={item.id} 
                   item={item} 
+                  isInvestment={true}
                   onUpdate={(id, field, val) => updateStrategy(id, field, val, setInvestments)} 
                   onRemove={(id) => removeStrategy(id, setInvestments)} 
                 />
               ))}
-              <button className="btn btn-sm btn-outline-dark fw-bold mt-2 mb-4 w-100" onClick={() => addStrategy(setInvestments, { amount: 0, frequency: 1, startDate: defaultStartDate })}>+ Add Investment</button>
+              <button className="btn btn-sm btn-outline-dark fw-bold mt-2 mb-4 w-100" onClick={() => addStrategy(setInvestments, { amount: 0, frequency: 1, startDate: defaultStartDate, accountType: 'TAXABLE' })}>+ Add Investment</button>
               
               <div className="d-flex align-items-center gap-3">
                 <input 
@@ -267,6 +271,13 @@ export default function ParameterPanel({
                     </button>
                   </div>
                 </div>
+              )}
+            </div>
+
+            {/* 4. Tax & Jurisdiction Control Panel */}
+            <div className="mt-4 border-top border-light pt-4">
+              {taxConfig && (
+                <TaxControlPanel taxConfig={taxConfig} handleTaxConfigChange={handleTaxConfigChange} />
               )}
             </div>
 

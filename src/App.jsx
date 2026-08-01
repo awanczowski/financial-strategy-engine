@@ -22,6 +22,8 @@ function MainContent() {
     setRateAdjustments,
     refinances,
     setRefinances,
+    taxConfig,
+    handleTaxConfigChange,
     addStrategy,
     removeStrategy,
     updateStrategy,
@@ -100,6 +102,8 @@ function MainContent() {
         extraPayments={extraPayments}
         investments={investments}
         rateAdjustments={rateAdjustments}
+        refinances={refinances}
+        taxConfig={taxConfig}
         viewMode={viewMode}
         onLoadScenario={loadScenario}
         onShowToast={showToast}
@@ -126,6 +130,8 @@ function MainContent() {
           setRateAdjustments={setRateAdjustments}
           refinances={refinances}
           setRefinances={setRefinances}
+          taxConfig={taxConfig}
+          handleTaxConfigChange={handleTaxConfigChange}
           addStrategy={addStrategy}
           removeStrategy={removeStrategy}
           updateStrategy={updateStrategy}
