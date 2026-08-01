@@ -1,6 +1,6 @@
 import { getMonthOffset, randomNormal } from './math.js';
 
-export const runMonteCarloSimulation = (monthContributions, loanConfig, options = {}) => {
+export const runMonteCarloSimulation = (monthContributions, loanConfig, options = {}, socialSecurityConfig = {}) => {
   const iterations = Number(options.iterations || loanConfig.monteCarloIterations) || 1000;
   const volatilityPct = Number(options.volatility !== undefined ? options.volatility : loanConfig.monteCarloVolatility) || 15;
   const annualStdDev = volatilityPct / 100;
@@ -10,6 +10,21 @@ export const runMonteCarloSimulation = (monthContributions, loanConfig, options 
   const retirementStartMonth = loanConfig.enableRetirement 
     ? getMonthOffset(loanConfig.loanStartDate, loanConfig.retirementDate) 
     : Infinity;
+
+  // Social Security Engine Parameters
+  const enableSocialSecurity = Boolean(socialSecurityConfig.enableSocialSecurity);
+  const selfMonthlyBenefit = Number(socialSecurityConfig.selfMonthlyBenefit) || 0;
+  const selfStartMonth = (enableSocialSecurity && socialSecurityConfig.selfStartDate) 
+    ? getMonthOffset(loanConfig.loanStartDate, socialSecurityConfig.selfStartDate) 
+    : Infinity;
+  
+  const enableSpouseSS = Boolean(socialSecurityConfig.enableSpouseSS);
+  const spouseMonthlyBenefit = Number(socialSecurityConfig.spouseMonthlyBenefit) || 0;
+  const spouseStartMonth = (enableSocialSecurity && enableSpouseSS && socialSecurityConfig.spouseStartDate) 
+    ? getMonthOffset(loanConfig.loanStartDate, socialSecurityConfig.spouseStartDate) 
+    : Infinity;
+
+  const ssColaAnnual = (Number(socialSecurityConfig.annualColaRate) || 0) / 100;
 
   const totalYears = Math.floor(monthContributions.length / 12);
 
@@ -63,14 +78,40 @@ export const runMonteCarloSimulation = (monthContributions, loanConfig, options 
           const monthlyMean = annualMean / 12;
           const r = randomNormal(monthlyMean, monthlyStdDev);
           
+          // Social Security benefit in current month
+          const yearsFromBase = Math.floor((monthNum - 1) / 12);
+          let selfSSInMonth = 0;
+          if (enableSocialSecurity && monthNum >= selfStartMonth) {
+            selfSSInMonth = selfMonthlyBenefit * Math.pow(1 + ssColaAnnual, yearsFromBase);
+          }
+
+          let spouseSSInMonth = 0;
+          if (enableSocialSecurity && enableSpouseSS && monthNum >= spouseStartMonth) {
+            spouseSSInMonth = spouseMonthlyBenefit * Math.pow(1 + ssColaAnnual, yearsFromBase);
+          }
+
+          const ssIncomeInMonth = selfSSInMonth + spouseSSInMonth;
           let withdrawal = 0;
+          let ssReinvested = 0;
+
           if (isRetired) {
             if (isFixed) withdrawal = currentFixedMonthly;
             else if (isPercentFixed) withdrawal = lockedWithdrawal;
             else if (isPercentDynamic) withdrawal = (port * pullRateAnnual) / 12;
+
+            if (ssIncomeInMonth > 0) {
+              if (ssIncomeInMonth >= withdrawal) {
+                ssReinvested = ssIncomeInMonth - withdrawal;
+                withdrawal = 0;
+              } else {
+                withdrawal -= ssIncomeInMonth;
+              }
+            }
+          } else if (ssIncomeInMonth > 0) {
+            ssReinvested = ssIncomeInMonth;
           }
           
-          port = port * (1 + r) + monthContributions[m] - withdrawal;
+          port = port * (1 + r) + monthContributions[m] + ssReinvested - withdrawal;
           
           // If liquid cash drops below $1, declare bankrupt path
           if (port <= 1) {

@@ -18,7 +18,7 @@ describe('OnboardingModal Component', () => {
     render(<OnboardingModal show={true} onClose={vi.fn()} />);
     
     expect(screen.getByText('Welcome to Strategy Engine')).toBeInTheDocument();
-    expect(screen.getByText('Step 1 of 8')).toBeInTheDocument();
+    expect(screen.getByText('Step 1 of 9')).toBeInTheDocument();
     expect(screen.getByText(/Core Philosophy/i)).toBeInTheDocument();
   });
 
@@ -29,7 +29,7 @@ describe('OnboardingModal Component', () => {
     fireEvent.click(nextBtn);
 
     expect(screen.getByText('Mortgage Base & Accelerated Payments')).toBeInTheDocument();
-    expect(screen.getByText('Step 2 of 8')).toBeInTheDocument();
+    expect(screen.getByText('Step 2 of 9')).toBeInTheDocument();
 
     const backBtn = screen.getByRole('button', { name: /← Back/i });
     fireEvent.click(backBtn);
@@ -62,7 +62,7 @@ describe('OnboardingModal Component', () => {
       fireEvent.click(nextBtn);
     }
 
-    expect(screen.getByText('Step 8 of 8')).toBeInTheDocument();
+    expect(screen.getByText('Step 9 of 9')).toBeInTheDocument();
     const finishBtn = screen.getByRole('button', { name: /Finish Tour ✓/i });
     fireEvent.click(finishBtn);
 

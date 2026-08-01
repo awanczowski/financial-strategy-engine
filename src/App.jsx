@@ -26,6 +26,8 @@ function MainContent() {
     setRefinances,
     taxConfig,
     handleTaxConfigChange,
+    socialSecurityConfig,
+    handleSocialSecurityConfigChange,
     addStrategy,
     removeStrategy,
     updateStrategy,
@@ -95,6 +97,7 @@ function MainContent() {
         isSimulating={isSimulating}
         results={monteCarloResults}
         loanConfig={loanConfig}
+        socialSecurityConfig={socialSecurityConfig}
         onReRun={handleOpenMonteCarlo}
       />
 
@@ -108,6 +111,7 @@ function MainContent() {
         rateAdjustments={rateAdjustments}
         refinances={refinances}
         taxConfig={taxConfig}
+        socialSecurityConfig={socialSecurityConfig}
         viewMode={viewMode}
         onLoadScenario={loadScenario}
         onShowToast={showToast}
@@ -142,6 +146,8 @@ function MainContent() {
           setRefinances={setRefinances}
           taxConfig={taxConfig}
           handleTaxConfigChange={handleTaxConfigChange}
+          socialSecurityConfig={socialSecurityConfig}
+          handleSocialSecurityConfigChange={handleSocialSecurityConfigChange}
           addStrategy={addStrategy}
           removeStrategy={removeStrategy}
           updateStrategy={updateStrategy}

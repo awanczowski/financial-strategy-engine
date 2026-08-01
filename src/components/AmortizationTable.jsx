@@ -2,6 +2,8 @@ import React from 'react';
 import { formatCurrency } from '../lib/formatters.js';
 
 export default function AmortizationTable({ scheduleData }) {
+  const hasSocialSecurityData = scheduleData?.some(r => (r.socialSecurity || 0) > 0);
+
   return (
     <>
       <h5 className="scandi-header mb-4 text-black">Yearly Rollup</h5>
@@ -15,7 +17,15 @@ export default function AmortizationTable({ scheduleData }) {
               <th className="text-danger scandi-label py-3 px-3">Interest (Yr)</th>
               <th className="text-black scandi-label py-3 px-3">Home (Med)</th>
               <th className="text-black scandi-label py-3 px-3">Invested (Yr)</th>
-              <th className="text-success scandi-label py-3 px-3">Withdrawn (Yr)</th>
+              <th className="text-success scandi-label py-3 px-3">
+                {hasSocialSecurityData ? 'Port. Withdraw (Yr)' : 'Withdrawn (Yr)'}
+              </th>
+              {hasSocialSecurityData && (
+                <>
+                  <th className="text-primary scandi-label py-3 px-3">Social Security (Yr)</th>
+                  <th className="text-dark scandi-label py-3 px-3 fw-bold">Total Ret. Income (Yr)</th>
+                </>
+              )}
               <th className="text-muted scandi-label py-3 px-3 d-none d-md-table-cell">Port. Low</th>
               <th className="text-black scandi-label py-3 px-3 fw-bolder">Port. Med</th>
               <th className="text-black scandi-label py-3 px-3 d-none d-md-table-cell">Port. High</th>
@@ -32,6 +42,12 @@ export default function AmortizationTable({ scheduleData }) {
                 <td className="py-3 px-3">{formatCurrency(row.homeMed)}</td>
                 <td className="py-3 px-3">{formatCurrency(row.investContributed)}</td>
                 <td className="text-success fw-bold py-3 px-3">{formatCurrency(row.withdrawn)}</td>
+                {hasSocialSecurityData && (
+                  <>
+                    <td className="text-primary fw-bold py-3 px-3">{formatCurrency(row.socialSecurity || 0)}</td>
+                    <td className="text-dark fw-bold py-3 px-3 bg-light-subtle">{formatCurrency(row.totalIncome || (row.withdrawn + (row.socialSecurity || 0)))}</td>
+                  </>
+                )}
                 <td className="text-muted py-3 px-3 d-none d-md-table-cell">{formatCurrency(row.invLow)}</td>
                 <td className="text-black fw-bolder py-3 px-3">{formatCurrency(row.invMed)}</td>
                 <td className="text-dark fw-bold py-3 px-3 d-none d-md-table-cell">{formatCurrency(row.invHigh)}</td>

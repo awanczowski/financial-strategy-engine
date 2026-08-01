@@ -6,7 +6,8 @@ import {
   defaultExtraPayments,
   defaultInvestments,
   defaultRefinances,
-  defaultTaxConfig
+  defaultTaxConfig,
+  defaultSocialSecurityConfig
 } from '../lib/constants.js';
 import { runSimulationEngine } from '../lib/engine/simulation.js';
 import { runMonteCarloSimulation } from '../lib/engine/monteCarlo.js';
@@ -32,7 +33,7 @@ const loadActiveSession = () => {
 /**
  * Top-level Strategy Context Provider component.
  * Manages loan configuration, extra payments, multi-bucket investments, rate adjustments,
- * refinances, tax settings, view mode, Monte Carlo simulation state, and session auto-saving.
+ * refinances, tax settings, social security settings, view mode, Monte Carlo simulation state, and session auto-saving.
  */
 export function StrategyProvider({ children }) {
   const activeSession = loadActiveSession();
@@ -43,6 +44,7 @@ export function StrategyProvider({ children }) {
   const [rateAdjustments, setRateAdjustments] = useState(activeSession?.rateAdjustments || []);
   const [refinances, setRefinances] = useState(activeSession?.refinances || defaultRefinances);
   const [taxConfig, setTaxConfig] = useState(activeSession?.taxConfig || defaultTaxConfig);
+  const [socialSecurityConfig, setSocialSecurityConfig] = useState(activeSession?.socialSecurityConfig || defaultSocialSecurityConfig);
   const [viewMode, setViewMode] = useState(activeSession?.viewMode || 'nominal'); // 'nominal' | 'real'
 
   // Monte Carlo State
@@ -78,6 +80,7 @@ export function StrategyProvider({ children }) {
           setRateAdjustments(decoded.rateAdjustments);
           if (decoded.refinances) setRefinances(decoded.refinances);
           if (decoded.taxConfig) setTaxConfig(decoded.taxConfig);
+          if (decoded.socialSecurityConfig) setSocialSecurityConfig(decoded.socialSecurityConfig);
           setViewMode(decoded.viewMode);
           showToast("Loaded shared strategy scenario!");
           loadedShared = true;
@@ -104,6 +107,7 @@ export function StrategyProvider({ children }) {
     if (Array.isArray(data.rateAdjustments)) setRateAdjustments(data.rateAdjustments);
     if (Array.isArray(data.refinances)) setRefinances(data.refinances);
     if (data.taxConfig) setTaxConfig({ ...defaultTaxConfig, ...data.taxConfig });
+    if (data.socialSecurityConfig) setSocialSecurityConfig({ ...defaultSocialSecurityConfig, ...data.socialSecurityConfig });
     if (data.viewMode) setViewMode(data.viewMode);
   };
 
@@ -115,10 +119,11 @@ export function StrategyProvider({ children }) {
       rateAdjustments,
       refinances,
       taxConfig,
+      socialSecurityConfig,
       viewMode
     };
     localStorage.setItem(ACTIVE_SESSION_KEY, JSON.stringify(sessionData));
-  }, [loanConfig, extraPayments, investments, rateAdjustments, refinances, taxConfig, viewMode]);
+  }, [loanConfig, extraPayments, investments, rateAdjustments, refinances, taxConfig, socialSecurityConfig, viewMode]);
 
   const handleConfigChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -157,6 +162,19 @@ export function StrategyProvider({ children }) {
     });
   };
 
+  const handleSocialSecurityConfigChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    let finalValue;
+    if (type === 'checkbox') {
+      finalValue = checked;
+    } else if (name === 'selfStartDate' || name === 'spouseStartDate') {
+      finalValue = value;
+    } else {
+      finalValue = value === '' ? '' : Number(value);
+    }
+    setSocialSecurityConfig(prev => ({ ...prev, [name]: finalValue }));
+  };
+
   const addStrategy = (setter, defaultObj) => {
     setter(prev => [...prev, { id: Date.now(), ...defaultObj }]);
   };
@@ -177,8 +195,8 @@ export function StrategyProvider({ children }) {
 
   // Deterministic simulation computed via engine library
   const { scheduleData, summary, initialBreakdown, monthContributions } = useMemo(() => {
-    return runSimulationEngine(loanConfig, extraPayments, investments, rateAdjustments, refinances, taxConfig);
-  }, [loanConfig, extraPayments, investments, rateAdjustments, refinances, taxConfig]);
+    return runSimulationEngine(loanConfig, extraPayments, investments, rateAdjustments, refinances, taxConfig, socialSecurityConfig);
+  }, [loanConfig, extraPayments, investments, rateAdjustments, refinances, taxConfig, socialSecurityConfig]);
 
   // Derived active summary and schedule data based on viewMode ('nominal' vs 'real')
   const activeSummary = useMemo(() => {
@@ -217,7 +235,9 @@ export function StrategyProvider({ children }) {
         mortgagePaid: row.mortgagePaidReal,
         interestPaid: row.interestPaidReal,
         investContributed: row.investContributedReal,
-        withdrawn: row.withdrawnReal
+        withdrawn: row.withdrawnReal,
+        socialSecurity: row.socialSecurityReal,
+        totalIncome: row.totalIncomeReal
       }));
     }
     return scheduleData;
@@ -249,6 +269,9 @@ export function StrategyProvider({ children }) {
     taxConfig,
     setTaxConfig,
     handleTaxConfigChange,
+    socialSecurityConfig,
+    setSocialSecurityConfig,
+    handleSocialSecurityConfigChange,
     viewMode,
     setViewMode,
     handleConfigChange,

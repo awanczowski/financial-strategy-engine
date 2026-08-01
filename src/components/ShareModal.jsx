@@ -10,6 +10,7 @@ export default function ShareModal({
   rateAdjustments,
   refinances = [],
   taxConfig,
+  socialSecurityConfig,
   viewMode,
   onLoadScenario,
   onShowToast
@@ -26,6 +27,7 @@ export default function ShareModal({
     rateAdjustments,
     refinances,
     taxConfig,
+    socialSecurityConfig,
     viewMode
   };
 
