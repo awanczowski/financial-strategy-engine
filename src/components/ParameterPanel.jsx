@@ -3,6 +3,7 @@ import StrategyRow from './StrategyRow.jsx';
 import RateAdjustmentRow from './RateAdjustmentRow.jsx';
 import RefinanceRow from './RefinanceRow.jsx';
 import TaxControlPanel from './TaxControlPanel.jsx';
+import InfoTooltip from './InfoTooltip.jsx';
 import { defaultStartDate } from '../lib/constants.js';
 
 export default function ParameterPanel({
@@ -37,7 +38,10 @@ export default function ParameterPanel({
             <h5 className="scandi-label text-black mb-4 border-bottom border-dark pb-2 fs-6">Real Estate & Mortgage</h5>
             
             {/* 1. Real Estate */}
-            <h6 className="scandi-label text-muted mb-3">Property Details</h6>
+            <h6 className="scandi-label text-muted mb-3 d-flex align-items-center">
+              Property Details
+              <InfoTooltip text="Models initial home value and compound annual appreciation across Low, Medium, and High market scenarios." />
+            </h6>
             <div className="row g-3 align-items-end mb-4">
               <div className="col-sm-6 col-md-6">
                 <label className="form-label scandi-label">Initial Home Value ($)</label>
@@ -56,7 +60,10 @@ export default function ParameterPanel({
             </div>
 
             {/* 2. Base Loan */}
-            <h6 className="scandi-label text-muted mb-3 border-top border-light pt-4">Loan Configuration</h6>
+            <h6 className="scandi-label text-muted mb-3 border-top border-light pt-4 d-flex align-items-center">
+              Loan Configuration
+              <InfoTooltip text="Standard monthly P&I amortization. Check Accelerated Bi-Weekly to make 26 half-payments per year (equivalent to 13 full monthly payments)." />
+            </h6>
             <div className="row g-3 align-items-end mb-4">
               <div className="col-sm-6 col-md-6">
                 <label className="form-label scandi-label">Loan Start Date</label>
@@ -93,7 +100,10 @@ export default function ParameterPanel({
             </div>
 
             {/* 3. ARM Adjustments */}
-            <h6 className="scandi-label text-muted mb-3 border-top border-light pt-4">ARM Adjustments (Rate Changes)</h6>
+            <h6 className="scandi-label text-muted mb-3 border-top border-light pt-4 d-flex align-items-center">
+              ARM Adjustments (Rate Changes)
+              <InfoTooltip text="Schedule rate shifts for Adjustable Rate Mortgages (ARMs) at specific future dates." />
+            </h6>
             <div className="mb-4">
               {rateAdjustments.length === 0 && <div className="text-muted small fst-italic mb-3">No rate changes scheduled.</div>}
               {rateAdjustments.map(item => (
@@ -108,7 +118,10 @@ export default function ParameterPanel({
             </div>
 
             {/* 4. Refinances */}
-            <h6 className="scandi-label text-muted mb-3 border-top border-light pt-4">Mortgage Refinances</h6>
+            <h6 className="scandi-label text-muted mb-3 border-top border-light pt-4 d-flex align-items-center">
+              Mortgage Refinances
+              <InfoTooltip text="Models future refinance events with closing cost roll-ins, updated monthly obligations, and breakeven month timelines." />
+            </h6>
             <div className="mb-4">
               {refinances.length === 0 && <div className="text-muted small fst-italic mb-3">No refinances scheduled.</div>}
               {refinances.map(item => (
@@ -123,7 +136,10 @@ export default function ParameterPanel({
             </div>
 
             {/* 5. Extra Payments */}
-            <h6 className="scandi-label text-muted mb-3 border-top border-light pt-4">Extra Mortgage Payments</h6>
+            <h6 className="scandi-label text-muted mb-3 border-top border-light pt-4 d-flex align-items-center">
+              Extra Mortgage Payments
+              <InfoTooltip text="Schedule recurring or one-off extra principal payments to accelerate debt payoff." />
+            </h6>
             <div className="mb-2">
               {extraPayments.length === 0 && <div className="text-muted small fst-italic mb-3">No extra payments scheduled.</div>}
               {extraPayments.map(item => (
@@ -144,7 +160,10 @@ export default function ParameterPanel({
             <h5 className="scandi-label text-black mb-4 border-bottom border-dark pb-2 fs-6">Wealth & Investing</h5>
 
             {/* 1. Portfolio Base */}
-            <h6 className="scandi-label text-muted mb-3">Portfolio Base</h6>
+            <h6 className="scandi-label text-muted mb-3 d-flex align-items-center">
+              Portfolio Base
+              <InfoTooltip text="Simulation horizon years, starting liquid balance, and Low/Medium/High compound annual return assumptions." />
+            </h6>
             <div className="row g-3 align-items-end mb-4">
               <div className="col-sm-6 col-md-6">
                 <label className="form-label scandi-label text-black fw-bolder border-bottom border-dark pb-1">Sim Term (Yrs)</label>
@@ -167,7 +186,10 @@ export default function ParameterPanel({
             </div>
 
             {/* 2. Ongoing Contributions */}
-            <h6 className="scandi-label text-muted mb-3 border-top border-light pt-4">Ongoing Contributions</h6>
+            <h6 className="scandi-label text-muted mb-3 border-top border-light pt-4 d-flex align-items-center">
+              Ongoing Contributions
+              <InfoTooltip text="Schedule contributions and assign tax account types: Taxable Brokerage, Pre-Tax (401k/IRA), or Roth IRA (Tax-Free)." />
+            </h6>
             <div className="mb-4">
               {investments.length === 0 && <div className="text-muted small fst-italic mb-3">No direct investments scheduled.</div>}
               {investments.map(item => (

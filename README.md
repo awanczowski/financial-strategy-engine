@@ -5,7 +5,7 @@
 [![CI Status](https://img.shields.io/badge/CI-Passing-brightgreen.svg)](.github/workflows/ci.yml)
 [![React](https://img.shields.io/badge/React-19.0-blue)](package.json)
 [![Vite](https://img.shields.io/badge/Vite-8.2-purple)](package.json)
-[![Test Suite](https://img.shields.io/badge/Tests-27_Passed-success)](src/lib/engine/__tests__/)
+[![Test Suite](https://img.shields.io/badge/Tests-32_Passed-success)](src/components/__tests__/)
 
 ## Overview
 Strategy Engine is a fluid, single-page React application designed to mathematically compare the long-term financial impacts of aggressive mortgage paydown strategies versus compounding market investments. It provides a comprehensive, period-by-period simulation of net worth trajectory, factoring in real estate appreciation, variable interest rates, flexible contribution schedules, multi-bucket tax treatment, refinance events, and a robust retirement withdrawal phase.
@@ -34,6 +34,11 @@ Additionally, it features an advanced **Monte Carlo Simulation** to stress-test 
 * **Retirement Decumulation Waterfall:** Pull withdrawals sequentially from Taxable -> Pre-Tax -> Roth. Pre-tax withdrawals automatically gross up based on effective retirement tax rates ($W_{\text{gross}} = \frac{W_{\text{net}}}{1 - r}$).
 * **Itemized MID & SALT Tax Shield Engine:** Model Mortgage Interest Deduction (MID) with pro-rata scaling for loans exceeding the $750,000 IRS principal cap. Deduct itemized State and Local Taxes (SALT) with preset or custom caps ($10k TCJA, $20k proposal, single, unlimited, or custom dollar cap), annual property tax, state income tax, and custom itemized deductions (charitable/medical).
 * **Regional Jurisdiction Presets:** Built-in regional presets for New York (NY State + NYC), California (CA State), and Texas / Florida (No State Tax).
+
+### Guided Onboarding & Interactive Tutorial
+* **Step-by-Step Interactive Walkthrough:** An 8-step guided tutorial overlay (`OnboardingModal`) walking new users through core philosophy, mortgage inputs, refinance triggers, multi-bucket wealth allocation, tax strategy engine, real vs. nominal inflation discounting, Monte Carlo stress testing, and scenario sharing.
+* **First-Visit Auto-Prompt:** Automatically offers onboarding on first visit (persisted via `localStorage`), with a "Guided Tour" button in the Navbar for on-demand replaying.
+* **Contextual Info Tooltips:** Inline minimalist info icons across parameter controls providing contextual financial guidance on hover.
 
 ### Display & Inflation Modes
 * **Nominal vs. Real Dollars:** Toggle between future nominal values and discounted real present values (discounted at user-defined inflation rates).
