@@ -1,12 +1,12 @@
 # Strategy Engine: Paydown vs. Invest Calculator
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-v1.8.0-black.svg)](package.json)
+[![Version](https://img.shields.io/badge/Version-v1.9.0-black.svg)](package.json)
 [![AI-Co-Created](https://img.shields.io/badge/Codebase-AI--Co--Created-8A2BE2.svg)](AI_TRANSPARENCY.md)
 [![CI Status](https://img.shields.io/badge/CI-Passing-brightgreen.svg)](.github/workflows/ci.yml)
 [![React](https://img.shields.io/badge/React-19.0-blue)](package.json)
 [![Vite](https://img.shields.io/badge/Vite-8.2-purple)](package.json)
-[![Test Suite](https://img.shields.io/badge/Tests-36_Passed-success)](src/components/__tests__/)
+[![Test Suite](https://img.shields.io/badge/Tests-39_Passed-success)](src/components/__tests__/)
 
 ## Overview
 Strategy Engine is a fluid, single-page React application designed to mathematically compare the long-term financial impacts of aggressive mortgage paydown strategies versus compounding market investments. It provides a comprehensive, period-by-period simulation of net worth trajectory, factoring in real estate appreciation, variable interest rates, flexible contribution schedules, multi-bucket tax treatment, refinance events, Social Security decumulation floors, and a robust retirement withdrawal phase.
@@ -24,11 +24,17 @@ Additionally, it features an advanced **Monte Carlo Simulation** to stress-test 
 
 ## Key Features
 
+### Segmented Parameter Controls & Decluttered UI
+* **Tabbed Parameter Navigation:** Switch between focused input cards: Real Estate & Mortgage (default), Wealth & Investing, Retirement & Social Security, Tax & Jurisdiction, and All Controls (vertically stacked full-width layout).
+* **Minimalist Aesthetics:** Icon-free minimalist typography paired with uniform black step badges (`Step 1` through `Step 4`).
+* **Important Timeline Dates Summary Box:** Summary dashboard card displaying computed Simulation Start, stacked Refinance Dates, ARM Rate Shifts, period-by-period Calendar Payoff Date (`YYYY-MM-DD`), Retirement Start, Social Security Claims, and Horizon End Date.
+
 ### Mortgage & Amortization Engine
 * **Flexible Extra Payments:** Schedule one-off or recurring extra principal payments with custom start dates and frequencies (Monthly, Quarterly, Semi-Annual, Annual).
 * **Bi-Weekly Accelerated Payments:** Model 26-period bi-weekly payment schedules.
 * **Rate Adjustments & Refinance Triggers:** Schedule future interest rate changes (ARMs) or full Refinance events. Refinance modeling calculates updated base payments, monthly payment delta, monthly interest savings, and exact breakeven month/year timelines.
 * **Freed Cash-Flow Redirection:** Automatically redirect freed mortgage payments into investment accumulators once debt is fully paid off.
+* **Locked Header & Filterable Amortization Schedule:** Sticky table header (`top: 0`) and locked Year column (`left: 0`) with column preset view toggles (All Columns, Debt & Payoff, Wealth & Portfolio, Retirement Income) and compact `0.8rem` font size.
 
 ### Multi-Bucket Wealth & Tax Engine
 * **Multi-Bucket Account Classification:** Assign ongoing contributions to **Taxable Brokerage**, **Pre-Tax (401k/IRA)**, or **Tax-Free (Roth IRA)** account buckets.
@@ -67,7 +73,7 @@ Additionally, it features an advanced **Monte Carlo Simulation** to stress-test 
 The application is built as a client-side Single Page Application (SPA) emphasizing performance and strict separation of presentation from computational logic.
 
 ### Tech Stack
-* **Framework:** React 18
+* **Framework:** React 19
 * **Build Tool:** Vite (for rapid HMR and optimized production bundling)
 * **Data Visualization:** Recharts (React components built on D3 for lightweight, responsive SVG charts)
 * **Styling:** Bootstrap 5 (overridden with custom minimalist Scandinavian design system)
