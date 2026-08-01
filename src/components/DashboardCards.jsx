@@ -1,32 +1,53 @@
 import React from 'react';
 import { formatCurrency } from '../lib/formatters.js';
 
-export default function DashboardCards({ initialBreakdown, summary }) {
+export default function DashboardCards({ 
+  initialBreakdown, 
+  summary, 
+  loanConfig, 
+  socialSecurityConfig,
+  refinances = [],
+  rateAdjustments = []
+}) {
+  const getEndDate = () => {
+    if (!loanConfig?.loanStartDate) return 'N/A';
+    const [y, m, d] = loanConfig.loanStartDate.split('-').map(Number);
+    if (!y || !m || !d) return 'N/A';
+    const endYear = y + (Number(loanConfig.simulationYears) || 30);
+    return `${endYear}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  };
+
+  const endDate = getEndDate();
+  const payoffDate = summary?.payoffDate || summary?.payoffString || 'Not Paid Off';
+
+  const refinanceDatesList = refinances.map(r => r.startDate).filter(Boolean);
+  const rateAdjDatesList = rateAdjustments.map(r => r.startDate).filter(Boolean);
+
   return (
     <>
       {/* Lined Up Summary Dashboard */}
       <div className="row g-4 mb-4">
         {initialBreakdown && (
-          <div className="col-lg-6">
+          <div className="col-lg-4">
             <div className="card dashboard-card bg-white h-100">
               <div className="card-body d-flex flex-column justify-content-between p-4">
                 <h6 className="card-subtitle mb-4 scandi-label text-muted border-bottom border-dark pb-2">Base Payment Breakdown ({initialBreakdown.frequency})</h6>
                 <div className="d-flex justify-content-between mb-2 align-items-center">
-                  <span className="text-black small fw-bold text-uppercase">Total Payment</span>
-                  <span className="text-black fw-bolder fs-4">{formatCurrency(initialBreakdown.periodicPayment)}</span>
+                  <span className="text-black small text-uppercase">Total Payment</span>
+                  <span className="text-black fs-4">{formatCurrency(initialBreakdown.periodicPayment)}</span>
                 </div>
                 <div className="d-flex justify-content-between mb-2">
-                  <span className="text-muted small fw-bold">Principal Portion (P.1)</span>
-                  <span className="text-muted fw-bold">{formatCurrency(initialBreakdown.principalPortion)}</span>
+                  <span className="text-muted small">Principal Portion (P.1)</span>
+                  <span className="text-muted">{formatCurrency(initialBreakdown.principalPortion)}</span>
                 </div>
                 <div className="d-flex justify-content-between mb-2">
-                  <span className="text-muted small fw-bold">Interest Portion (P.1)</span>
-                  <span className="text-muted fw-bold">{formatCurrency(initialBreakdown.interestPortion)}</span>
+                  <span className="text-muted small">Interest Portion (P.1)</span>
+                  <span className="text-muted">{formatCurrency(initialBreakdown.interestPortion)}</span>
                 </div>
                 {initialBreakdown.extraInMonth1 > 0 && (
                   <div className="d-flex justify-content-between mt-2 pt-2 border-top border-dark">
-                    <span className="text-black small fw-bold">Extra Applied (Date 1)</span>
-                    <span className="text-black fw-bold">+{formatCurrency(initialBreakdown.extraInMonth1)}</span>
+                    <span className="text-black small">Extra Applied (Date 1)</span>
+                    <span className="text-black">+{formatCurrency(initialBreakdown.extraInMonth1)}</span>
                   </div>
                 )}
               </div>
@@ -34,25 +55,92 @@ export default function DashboardCards({ initialBreakdown, summary }) {
           </div>
         )}
 
-        <div className="col-lg-6">
+        <div className="col-lg-4">
           <div className="card dashboard-card bg-white h-100">
             <div className="card-body d-flex flex-column justify-content-between p-4">
               <h6 className="card-subtitle mb-4 scandi-label text-muted border-bottom border-dark pb-2">Cash Flow & Debt</h6>
               <div className="d-flex justify-content-between mb-2 align-items-center">
-                <span className="text-black small fw-bold text-uppercase">Payoff Date</span>
-                <span className="text-black fw-bolder fs-4">{summary.payoffString}</span>
+                <span className="text-black small text-uppercase">Payoff Date</span>
+                <span className="text-black fs-4">{payoffDate}</span>
               </div>
               <div className="d-flex justify-content-between mb-2">
-                <span className="text-muted small fw-bold text-uppercase">Total Interest</span>
-                <span className="text-danger fw-bold">{formatCurrency(summary.totalInterestPaid)}</span>
+                <span className="text-muted small text-uppercase">Total Interest</span>
+                <span className="text-danger">{formatCurrency(summary.totalInterestPaid)}</span>
               </div>
               <div className="d-flex justify-content-between mb-2">
-                <span className="text-muted small fw-bold text-uppercase">Total Invested</span>
-                <span className="text-black fw-bold">{formatCurrency(summary.totalInvestContributed)}</span>
+                <span className="text-muted small text-uppercase">Total Invested</span>
+                <span className="text-black">{formatCurrency(summary.totalInvestContributed)}</span>
               </div>
               <div className="d-flex justify-content-between">
-                <span className="text-muted small fw-bold text-uppercase">Total Withdrawn</span>
-                <span className="text-success fw-bold">{formatCurrency(summary.totalWithdrawnOverall)}</span>
+                <span className="text-muted small text-uppercase">Total Withdrawn</span>
+                <span className="text-success">{formatCurrency(summary.totalWithdrawnOverall)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="col-lg-4">
+          <div className="card dashboard-card bg-white h-100">
+            <div className="card-body d-flex flex-column justify-content-between p-4">
+              <h6 className="card-subtitle mb-4 scandi-label text-muted border-bottom border-dark pb-2">Important Timeline Dates</h6>
+              
+              <div className="d-flex justify-content-between mb-2 align-items-center">
+                <span className="text-black small text-uppercase">Simulation Start</span>
+                <span className="text-black fs-6">{loanConfig?.loanStartDate || '2026-08-01'}</span>
+              </div>
+
+              {refinanceDatesList.length > 0 && (
+                <div className="d-flex justify-content-between mb-2 align-items-start">
+                  <span className="text-muted small text-uppercase">Refinance Event(s)</span>
+                  <div className="text-end">
+                    {refinanceDatesList.map((d, idx) => (
+                      <div key={idx} className="text-black fs-6">{d}</div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {rateAdjDatesList.length > 0 && (
+                <div className="d-flex justify-content-between mb-2 align-items-start">
+                  <span className="text-muted small text-uppercase">ARM Rate Shift(s)</span>
+                  <div className="text-end">
+                    {rateAdjDatesList.map((d, idx) => (
+                      <div key={idx} className="text-black fs-6">{d}</div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="d-flex justify-content-between mb-2 align-items-center">
+                <span className="text-muted small text-uppercase">Mortgage Payoff</span>
+                <span className="text-black fs-6">{payoffDate}</span>
+              </div>
+
+              <div className="d-flex justify-content-between mb-2 align-items-center">
+                <span className="text-muted small text-uppercase">Retirement Start</span>
+                <span className="text-black fs-6">
+                  {loanConfig?.enableRetirement ? (loanConfig.retirementDate || 'Not Set') : 'Disabled'}
+                </span>
+              </div>
+
+              {socialSecurityConfig?.enableSocialSecurity && (
+                <>
+                  <div className="d-flex justify-content-between mb-2 align-items-center">
+                    <span className="text-muted small text-uppercase">Social Security (Self)</span>
+                    <span className="text-black fs-6">{socialSecurityConfig.selfStartDate || 'Not Set'}</span>
+                  </div>
+                  {socialSecurityConfig.enableSpouseSS && (
+                    <div className="d-flex justify-content-between mb-2 align-items-center">
+                      <span className="text-muted small text-uppercase">Social Security (Spouse)</span>
+                      <span className="text-black fs-6">{socialSecurityConfig.spouseStartDate || 'Not Set'}</span>
+                    </div>
+                  )}
+                </>
+              )}
+
+              <div className="d-flex justify-content-between mt-1 pt-2 border-top border-dark align-items-center">
+                <span className="text-black small text-uppercase">End of Horizon</span>
+                <span className="text-black fs-6">{endDate}</span>
               </div>
             </div>
           </div>

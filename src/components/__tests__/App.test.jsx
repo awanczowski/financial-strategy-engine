@@ -20,14 +20,16 @@ describe('App Component', () => {
 
   it('renders parameter panel controls including Mortgage Refinances section', () => {
     render(<App />);
-    expect(screen.getByText('Real Estate & Mortgage')).toBeInTheDocument();
-    expect(screen.getByText('Wealth & Investing')).toBeInTheDocument();
+    expect(screen.getAllByText('Real Estate & Mortgage').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Wealth & Investing').length).toBeGreaterThan(0);
     expect(screen.getByText('Mortgage Refinances')).toBeInTheDocument();
     expect(screen.getByText('+ Add Refinance')).toBeInTheDocument();
   });
 
   it('allows changing investment contribution account types multiple times without locking', () => {
     render(<App />);
+    const wealthTab = screen.getByRole('button', { name: /Wealth & Investing/i });
+    fireEvent.click(wealthTab);
     const selects = screen.getAllByTitle('Account Bucket');
     expect(selects.length).toBeGreaterThan(0);
     const select = selects[0];

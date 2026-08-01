@@ -130,7 +130,14 @@ function MainContent() {
       <main className="flex-grow-1 w-100 p-3 p-md-4 p-xl-5">
         
         {/* Lined Up Summary Dashboard */}
-        <DashboardCards initialBreakdown={initialBreakdown} summary={activeSummary} />
+        <DashboardCards 
+          initialBreakdown={initialBreakdown} 
+          summary={activeSummary} 
+          loanConfig={loanConfig}
+          socialSecurityConfig={socialSecurityConfig}
+          refinances={refinances}
+          rateAdjustments={rateAdjustments}
+        />
 
         {/* Strategy Engine Controls */}
         <ParameterPanel 
