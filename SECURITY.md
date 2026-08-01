@@ -6,8 +6,8 @@ We release security patches and updates for the active release line of **Strateg
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 1.6.x   | :white_check_mark: |
-| < 1.5   | :x:                |
+| 1.7.x   | :white_check_mark: |
+| < 1.6   | :x:                |
 
 ---
 
