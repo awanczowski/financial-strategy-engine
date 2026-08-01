@@ -8,6 +8,8 @@ export default function ShareModal({
   extraPayments,
   investments,
   rateAdjustments,
+  refinances = [],
+  taxConfig,
   viewMode,
   onLoadScenario,
   onShowToast
@@ -22,6 +24,8 @@ export default function ShareModal({
     extraPayments,
     investments,
     rateAdjustments,
+    refinances,
+    taxConfig,
     viewMode
   };
 

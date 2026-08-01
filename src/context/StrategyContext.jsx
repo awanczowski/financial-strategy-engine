@@ -12,6 +12,10 @@ import { runSimulationEngine } from '../lib/engine/simulation.js';
 import { runMonteCarloSimulation } from '../lib/engine/monteCarlo.js';
 import { decodeScenario } from '../lib/shareSerializer.js';
 
+/**
+ * Helper to safely retrieve cached session state from browser localStorage.
+ * @returns {Object|null} Saved session state object or null if unavailable.
+ */
 const loadActiveSession = () => {
   if (typeof window === 'undefined') return null;
   const saved = localStorage.getItem(ACTIVE_SESSION_KEY);
@@ -25,6 +29,11 @@ const loadActiveSession = () => {
   return null;
 };
 
+/**
+ * Top-level Strategy Context Provider component.
+ * Manages loan configuration, extra payments, multi-bucket investments, rate adjustments,
+ * refinances, tax settings, view mode, Monte Carlo simulation state, and session auto-saving.
+ */
 export function StrategyProvider({ children }) {
   const activeSession = loadActiveSession();
 
