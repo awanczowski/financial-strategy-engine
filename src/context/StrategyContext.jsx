@@ -50,8 +50,9 @@ export function StrategyProvider({ children }) {
   const [isSimulating, setIsSimulating] = useState(false);
   const [monteCarloResults, setMonteCarloResults] = useState(null);
 
-  // Share & Toast State
+  // Share, Onboarding & Toast State
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showOnboardingModal, setShowOnboardingModal] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
 
   const showToast = (msg) => {
@@ -61,11 +62,13 @@ export function StrategyProvider({ children }) {
     }, 3000);
   };
 
-  // URL Auto-Hydration for Shared Links
+  // URL Auto-Hydration & Onboarding Auto-Prompt on First Visit
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const sharedCode = params.get('scenario');
+      let loadedShared = false;
+
       if (sharedCode) {
         const decoded = decodeScenario(sharedCode);
         if (decoded) {
@@ -77,11 +80,18 @@ export function StrategyProvider({ children }) {
           if (decoded.taxConfig) setTaxConfig(decoded.taxConfig);
           setViewMode(decoded.viewMode);
           showToast("Loaded shared strategy scenario!");
+          loadedShared = true;
 
           // Clean scenario parameter from URL bar without page reload
           const cleanUrl = `${window.location.pathname}${window.location.hash}`;
           window.history.replaceState({}, document.title, cleanUrl);
         }
+      }
+
+      // Check if user has completed onboarding tour; auto-prompt if first visit and not loading shared scenario
+      const completedTour = localStorage.getItem('hasCompletedOnboardingTour');
+      if (!completedTour && !loadedShared) {
+        setShowOnboardingModal(true);
       }
     }
   }, []);
@@ -258,6 +268,8 @@ export function StrategyProvider({ children }) {
     handleOpenMonteCarlo,
     showShareModal,
     setShowShareModal,
+    showOnboardingModal,
+    setShowOnboardingModal,
     loadScenario,
     showToast,
     toastMessage

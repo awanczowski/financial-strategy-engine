@@ -7,6 +7,7 @@ import ChartSection from './components/ChartSection.jsx';
 import AmortizationTable from './components/AmortizationTable.jsx';
 import MonteCarloModal from './components/MonteCarloModal.jsx';
 import ShareModal from './components/ShareModal.jsx';
+import OnboardingModal from './components/OnboardingModal.jsx';
 import Footer from './components/Footer.jsx';
 import { StrategyProvider } from './context/StrategyContext.jsx';
 import { useStrategy } from './context/useStrategy.js';
@@ -38,6 +39,8 @@ function MainContent() {
     handleOpenMonteCarlo,
     showShareModal,
     setShowShareModal,
+    showOnboardingModal,
+    setShowOnboardingModal,
     loadScenario,
     showToast,
     viewMode
@@ -108,6 +111,12 @@ function MainContent() {
         viewMode={viewMode}
         onLoadScenario={loadScenario}
         onShowToast={showToast}
+      />
+
+      {/* Guided Onboarding Tutorial Modal */}
+      <OnboardingModal 
+        show={showOnboardingModal}
+        onClose={() => setShowOnboardingModal(false)}
       />
 
       {/* Sticky Top Navigation Bar */}

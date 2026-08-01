@@ -60,6 +60,16 @@ export default function Navbar({ loanConfig: propLoanConfig, handleConfigChange:
             </div>
           </div>
 
+          {/* Guided Onboarding Tour Button */}
+          <button
+            type="button"
+            className="btn btn-sm btn-outline-dark fw-bold scandi-label px-2 px-sm-3 d-inline-flex align-items-center gap-1"
+            onClick={() => strategyCtx.setShowOnboardingModal && strategyCtx.setShowOnboardingModal(true)}
+            title="Launch interactive guided onboarding tour"
+          >
+            <span>Guided Tour</span>
+          </button>
+
           {/* Share Scenario Button */}
           <button
             type="button"
