@@ -8,6 +8,7 @@ export const encodeScenario = (statePayload) => {
       extraPayments: statePayload.extraPayments || [],
       investments: statePayload.investments || [],
       rateAdjustments: statePayload.rateAdjustments || [],
+      refinances: statePayload.refinances || [],
       viewMode: statePayload.viewMode || 'nominal'
     };
     const jsonStr = JSON.stringify(cleanPayload);
@@ -31,6 +32,7 @@ export const decodeScenario = (encodedStr) => {
       extraPayments: Array.isArray(parsed.extraPayments) ? parsed.extraPayments : defaultExtraPayments,
       investments: Array.isArray(parsed.investments) ? parsed.investments : defaultInvestments,
       rateAdjustments: Array.isArray(parsed.rateAdjustments) ? parsed.rateAdjustments : [],
+      refinances: Array.isArray(parsed.refinances) ? parsed.refinances : [],
       viewMode: parsed.viewMode === 'real' ? 'real' : 'nominal'
     };
   } catch (e) {
@@ -54,6 +56,7 @@ export const exportScenarioToJson = (statePayload, filename = 'strategy-scenario
       extraPayments: statePayload.extraPayments || defaultExtraPayments,
       investments: statePayload.investments || defaultInvestments,
       rateAdjustments: statePayload.rateAdjustments || [],
+      refinances: statePayload.refinances || [],
       viewMode: statePayload.viewMode || 'nominal'
     };
     const blob = new Blob([JSON.stringify(cleanPayload, null, 2)], { type: 'application/json' });
@@ -79,6 +82,7 @@ export const importScenarioFromJson = (jsonContent) => {
       extraPayments: Array.isArray(parsed.extraPayments) ? parsed.extraPayments : defaultExtraPayments,
       investments: Array.isArray(parsed.investments) ? parsed.investments : defaultInvestments,
       rateAdjustments: Array.isArray(parsed.rateAdjustments) ? parsed.rateAdjustments : [],
+      refinances: Array.isArray(parsed.refinances) ? parsed.refinances : [],
       viewMode: parsed.viewMode === 'real' ? 'real' : 'nominal'
     };
   } catch (e) {
