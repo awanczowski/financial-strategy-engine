@@ -42,3 +42,20 @@ export const randomNormal = (mean, stdDev) => {
   const z = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
   return z * stdDev + mean;
 };
+
+/**
+ * Computes calendar date string (YYYY-MM-DD) from baseline date string and 1-indexed month offset.
+ * 
+ * @param {string} baseStr Start date string (e.g., '2026-08-01').
+ * @param {number} monthOffset 1-indexed month number.
+ * @returns {string} Calendar date string (YYYY-MM-DD).
+ */
+export const computeDateFromOffset = (baseStr, monthOffset) => {
+  if (!baseStr || !monthOffset) return null;
+  const [by, bm, bd] = baseStr.split('-').map(Number);
+  if (!by || !bm) return null;
+  const totalMonths = (by * 12 + (bm - 1)) + (monthOffset - 1);
+  const targetYear = Math.floor(totalMonths / 12);
+  const targetMonth = (totalMonths % 12) + 1;
+  return `${targetYear}-${String(targetMonth).padStart(2, '0')}-${String(bd || 1).padStart(2, '0')}`;
+};

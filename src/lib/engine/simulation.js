@@ -1,4 +1,4 @@
-import { calculateStandardPayment, getMonthOffset } from './math.js';
+import { calculateStandardPayment, getMonthOffset, computeDateFromOffset } from './math.js';
 
 /**
  * Runs deterministic month-by-month financial strategy simulation.
@@ -478,6 +478,7 @@ export const runSimulationEngine = (loanConfig, extraPayments = [], investments 
   }
 
   const finalDiscountFactor = Math.pow(1 + inflationRateAnnual, -(simulationMonths / 12));
+  const payoffDate = payoffMonth ? computeDateFromOffset(baseDate, payoffMonth) : null;
 
   return {
     scheduleData: yearlyData,
@@ -492,6 +493,8 @@ export const runSimulationEngine = (loanConfig, extraPayments = [], investments 
       totalWithdrawnOverallReal,
       totalSocialSecurityIncome,
       totalSocialSecurityIncomeReal,
+      payoffMonth,
+      payoffDate,
       payoffString: payoffMonth 
         ? `Yr ${Math.ceil(payoffMonth / 12)}, Mo ${payoffMonth % 12 === 0 ? 12 : payoffMonth % 12}` 
         : "Not paid off",
