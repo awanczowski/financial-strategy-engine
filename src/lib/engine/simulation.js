@@ -104,11 +104,15 @@ export const runSimulationEngine = (loanConfig, extraPayments = [], investments 
   const annualInvestRateMed = (Number(loanConfig.investRateMed) || 8.0) / 100;
   const yearsToRetirementStart = Math.max(0, coastFireTargetAge - coastFireCurrentAge);
   const coastFireRequiredToday = fullFireTarget / Math.pow(1 + annualInvestRateMed, yearsToRetirementStart);
+  const startingPortfolio = Number(loanConfig.initialInvestment) || 0;
+  const targetRetirementMonth = Math.max(1, (coastFireTargetAge - coastFireCurrentAge) * 12);
 
   let coastFireAchievedMonth = null;
   let coastFireAchievedYear = null;
   let coastFireAchievedAge = null;
   let coastFireAchievedDate = null;
+  let coastFireAchievedPortfolio = null;
+  let portfolioAtRetirement = null;
 
   let taxableMed = Number(loanConfig.initialInvestment) || 0;
   let taxDeferredMed = 0;
@@ -428,7 +432,12 @@ export const runSimulationEngine = (loanConfig, extraPayments = [], investments 
         coastFireAchievedYear = Math.ceil(month / 12);
         coastFireAchievedAge = currentAge;
         coastFireAchievedDate = computeDateFromOffset(baseDate, month);
+        coastFireAchievedPortfolio = currentInvestmentMed;
       }
+    }
+
+    if (month === targetRetirementMonth) {
+      portfolioAtRetirement = currentInvestmentMed;
     }
     currentInvestmentLow = Math.max(0, currentInvestmentLow + (currentInvestmentLow * effectiveTaxableYieldLow) + investContributionThisMonth - withdrawalLow);
     currentInvestmentHigh = Math.max(0, currentInvestmentHigh + (currentInvestmentHigh * effectiveTaxableYieldHigh) + investContributionThisMonth - withdrawalHigh);
@@ -568,10 +577,12 @@ export const runSimulationEngine = (loanConfig, extraPayments = [], investments 
         achievedYear: coastFireAchievedYear,
         achievedAge: coastFireAchievedAge,
         achievedDate: coastFireAchievedDate,
+        achievedPortfolio: coastFireAchievedPortfolio,
         requiredToday: coastFireRequiredToday,
         fullFireTarget: fullFireTarget,
-        currentPortfolio: currentInvestmentMed,
-        percentAchievedToday: coastFireRequiredToday > 0 ? Math.min(100, (currentInvestmentMed / coastFireRequiredToday) * 100) : 0
+        startingPortfolio: startingPortfolio,
+        portfolioAtRetirement: portfolioAtRetirement ?? currentInvestmentMed,
+        percentAchievedToday: coastFireRequiredToday > 0 ? Math.min(100, (startingPortfolio / coastFireRequiredToday) * 100) : 0
       }
     }
   };
