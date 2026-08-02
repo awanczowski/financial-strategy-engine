@@ -43,6 +43,27 @@ describe('App Component', () => {
     fireEvent.change(select, { target: { value: 'TAXABLE' } });
     expect(select.value).toBe('TAXABLE');
   });
+
+  it('allows toggling dark mode on and off and persists preference', () => {
+    localStorage.clear();
+    render(<App />);
+
+    const toggleBtn = screen.getByRole('button', { name: /Switch to dark mode/i });
+    expect(toggleBtn).toBeInTheDocument();
+
+    // Toggle to Dark Mode
+    fireEvent.click(toggleBtn);
+    expect(document.documentElement.getAttribute('data-bs-theme')).toBe('dark');
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+    expect(localStorage.getItem('theme')).toBe('dark');
+
+    // Toggle back to Light Mode
+    const toggleLightBtn = screen.getByRole('button', { name: /Switch to light mode/i });
+    fireEvent.click(toggleLightBtn);
+    expect(document.documentElement.getAttribute('data-bs-theme')).toBe('light');
+    expect(document.documentElement.getAttribute('data-theme')).toBe('light');
+    expect(localStorage.getItem('theme')).toBe('light');
+  });
 });
 
 

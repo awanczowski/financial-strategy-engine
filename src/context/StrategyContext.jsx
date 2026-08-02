@@ -47,6 +47,46 @@ export function StrategyProvider({ children }) {
   const [socialSecurityConfig, setSocialSecurityConfig] = useState(activeSession?.socialSecurityConfig || defaultSocialSecurityConfig);
   const [viewMode, setViewMode] = useState(activeSession?.viewMode || 'nominal'); // 'nominal' | 'real'
 
+  // Theme state: 'light' | 'dark'
+  const [theme, setThemeState] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('theme');
+      if (saved === 'dark' || saved === 'light') return saved;
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        return 'dark';
+      }
+    }
+    return 'light';
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      document.documentElement.setAttribute('data-bs-theme', theme);
+      document.documentElement.setAttribute('data-theme', theme);
+      document.documentElement.style.colorScheme = theme;
+      localStorage.setItem('theme', theme);
+    }
+  }, [theme]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e) => {
+      const saved = localStorage.getItem('theme');
+      if (!saved) {
+        setThemeState(e.matches ? 'dark' : 'light');
+      }
+    };
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    setThemeState(prev => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
   // Monte Carlo State
   const [showMonteCarloModal, setShowMonteCarloModal] = useState(false);
   const [isSimulating, setIsSimulating] = useState(false);
@@ -306,7 +346,10 @@ export function StrategyProvider({ children }) {
     setShowOnboardingModal,
     loadScenario,
     showToast,
-    toastMessage
+    toastMessage,
+    theme,
+    setTheme: setThemeState,
+    toggleTheme
   };
 
   return (

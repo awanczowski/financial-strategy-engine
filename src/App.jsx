@@ -1,5 +1,6 @@
 import React from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import './App.css';
 import Navbar from './components/Navbar.jsx';
 import DashboardCards from './components/DashboardCards.jsx';
 import ParameterPanel from './components/ParameterPanel.jsx';
@@ -49,49 +50,12 @@ function MainContent() {
   } = useStrategy();
 
   return (
-    <div 
-      className="text-dark font-monospace m-0 p-0 d-flex flex-column min-vh-100" 
-      style={{ 
-        width: '100vw', 
-        overflowX: 'hidden', 
-        backgroundColor: '#f9f9f9',
-        fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" 
-      }}
+    <div
+      className="strategy-engine text-dark font-monospace m-0 p-0 d-flex flex-column min-vh-100"
     >
-      <style>{`
-        body, #root { max-width: none !important; width: 100vw !important; margin: 0 !important; padding: 0 !important; overflow-x: hidden; }
-
-        .card, .form-control, .btn, .input-group-text, .form-select { border-radius: 0 !important; box-shadow: none !important; }
-        .scandi-input:focus, .form-select:focus { border-color: #000 !important; box-shadow: inset 0 0 0 1px #000 !important; outline: none; }
-        .btn-outline-dark:hover { background-color: #000; color: #fff; }
-
-        .dashboard-card { border: 1px solid #000 !important; transition: transform 0.2s ease; }
-        .dashboard-card:hover { transform: translateY(-4px); }
-
-        .scandi-checkbox {
-          appearance: none; width: 24px; height: 24px; border: 1px solid #000; background-color: #fff; 
-          cursor: pointer; position: relative; margin: 0; display: inline-block; flex-shrink: 0;
-        }
-        .scandi-checkbox:checked { background-color: #000; }
-        .scandi-checkbox:checked::after {
-          content: ''; position: absolute; left: 6px; top: 2px; width: 8px; height: 13px; 
-          border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg);
-        }
-
-        ::-webkit-scrollbar { width: 4px; height: 4px; }
-        ::-webkit-scrollbar-track { background: #fff; border-left: 1px solid #e5e5e5; }
-        ::-webkit-scrollbar-thumb { background: #000; }
-
-        .scandi-header { font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; }
-        .scandi-label { font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; font-size: 0.75rem; }
-
-        @media (min-width: 992px) {
-          .border-lg-end { border-right: 1px solid #e5e5e5 !important; }
-        }
-      `}</style>
 
       {/* Monte Carlo Modal Overlay */}
-      <MonteCarloModal 
+      <MonteCarloModal
         show={showMonteCarloModal}
         onClose={() => setShowMonteCarloModal(false)}
         isSimulating={isSimulating}
@@ -102,7 +66,7 @@ function MainContent() {
       />
 
       {/* Scenario Share & Import/Export Modal */}
-      <ShareModal 
+      <ShareModal
         show={showShareModal}
         onClose={() => setShowShareModal(false)}
         loanConfig={loanConfig}
@@ -118,7 +82,7 @@ function MainContent() {
       />
 
       {/* Guided Onboarding Tutorial Modal */}
-      <OnboardingModal 
+      <OnboardingModal
         show={showOnboardingModal}
         onClose={() => setShowOnboardingModal(false)}
       />
@@ -128,11 +92,11 @@ function MainContent() {
 
       {/* Main Full-Width Content Area */}
       <main className="flex-grow-1 w-100 p-3 p-md-4 p-xl-5">
-        
+
         {/* Lined Up Summary Dashboard */}
-        <DashboardCards 
-          initialBreakdown={initialBreakdown} 
-          summary={activeSummary} 
+        <DashboardCards
+          initialBreakdown={initialBreakdown}
+          summary={activeSummary}
           loanConfig={loanConfig}
           socialSecurityConfig={socialSecurityConfig}
           refinances={refinances}
@@ -140,7 +104,7 @@ function MainContent() {
         />
 
         {/* Strategy Engine Controls */}
-        <ParameterPanel 
+        <ParameterPanel
           loanConfig={loanConfig}
           handleConfigChange={handleConfigChange}
           extraPayments={extraPayments}
