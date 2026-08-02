@@ -89,6 +89,27 @@ export const runSimulationEngine = (loanConfig, extraPayments = [], investments 
   let totalSocialSecurityIncome = 0;
   let totalSocialSecurityIncomeReal = 0;
 
+  // Coast FIRE Engine Configuration
+  const enableCoastFire = Boolean(loanConfig.enableCoastFire);
+  const coastFireCurrentAge = Number(loanConfig.coastFireCurrentAge) || 30;
+  const coastFireTargetAge = Number(loanConfig.coastFireTargetAge) || 65;
+  const coastFireTargetAnnualExpense = Number(loanConfig.coastFireTargetAnnualExpense) || 60000;
+  const coastFireWithdrawalRate = (Number(loanConfig.coastFireWithdrawalRate) || 4.0) / 100;
+  
+  let fullFireTarget = Number(loanConfig.coastFireTargetAmount) || 0;
+  if (fullFireTarget <= 0 && coastFireWithdrawalRate > 0) {
+    fullFireTarget = coastFireTargetAnnualExpense / coastFireWithdrawalRate;
+  }
+
+  const annualInvestRateMed = (Number(loanConfig.investRateMed) || 8.0) / 100;
+  const yearsToRetirementStart = Math.max(0, coastFireTargetAge - coastFireCurrentAge);
+  const coastFireRequiredToday = fullFireTarget / Math.pow(1 + annualInvestRateMed, yearsToRetirementStart);
+
+  let coastFireAchievedMonth = null;
+  let coastFireAchievedYear = null;
+  let coastFireAchievedAge = null;
+  let coastFireAchievedDate = null;
+
   let taxableMed = Number(loanConfig.initialInvestment) || 0;
   let taxDeferredMed = 0;
   let taxFreeMed = 0;
@@ -396,6 +417,19 @@ export const runSimulationEngine = (loanConfig, extraPayments = [], investments 
     }
 
     currentInvestmentMed = taxableMed + taxDeferredMed + taxFreeMed;
+
+    if (enableCoastFire && coastFireAchievedMonth === null) {
+      const currentAge = coastFireCurrentAge + Math.floor((month - 1) / 12);
+      const remainingYears = Math.max(0, coastFireTargetAge - currentAge);
+      const requiredCoastFireTarget = fullFireTarget / Math.pow(1 + annualInvestRateMed, remainingYears);
+      
+      if (currentInvestmentMed >= requiredCoastFireTarget) {
+        coastFireAchievedMonth = month;
+        coastFireAchievedYear = Math.ceil(month / 12);
+        coastFireAchievedAge = currentAge;
+        coastFireAchievedDate = computeDateFromOffset(baseDate, month);
+      }
+    }
     currentInvestmentLow = Math.max(0, currentInvestmentLow + (currentInvestmentLow * effectiveTaxableYieldLow) + investContributionThisMonth - withdrawalLow);
     currentInvestmentHigh = Math.max(0, currentInvestmentHigh + (currentInvestmentHigh * effectiveTaxableYieldHigh) + investContributionThisMonth - withdrawalHigh);
     
@@ -526,6 +560,18 @@ export const runSimulationEngine = (loanConfig, extraPayments = [], investments 
         finalTaxableMed: taxableMed,
         finalTaxDeferredMed: taxDeferredMed,
         finalTaxFreeMed: taxFreeMed
+      },
+      coastFireSummary: {
+        enabled: enableCoastFire,
+        achieved: coastFireAchievedMonth !== null,
+        achievedMonth: coastFireAchievedMonth,
+        achievedYear: coastFireAchievedYear,
+        achievedAge: coastFireAchievedAge,
+        achievedDate: coastFireAchievedDate,
+        requiredToday: coastFireRequiredToday,
+        fullFireTarget: fullFireTarget,
+        currentPortfolio: currentInvestmentMed,
+        percentAchievedToday: coastFireRequiredToday > 0 ? Math.min(100, (currentInvestmentMed / coastFireRequiredToday) * 100) : 0
       }
     }
   };

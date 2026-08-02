@@ -286,5 +286,34 @@ export const presetScenarios = {
       },
       viewMode: 'real'
     }
+  },
+  coast_fire_target: {
+    name: 'Coast FIRE Target Strategy',
+    description: 'Models reaching a Coast FIRE portfolio threshold by age 60 to cover $60,000/yr retirement expenses with compound growth.',
+    data: {
+      loanConfig: {
+        ...defaultLoanConfig,
+        enableCoastFire: true,
+        coastFireCurrentAge: 30,
+        coastFireTargetAge: 60,
+        coastFireTargetAnnualExpense: 60000,
+        coastFireWithdrawalRate: 4.0,
+        coastFireTargetAmount: 1500000,
+        initialInvestment: 75000,
+        investRateMed: 8.0,
+        simulationYears: 40
+      },
+      extraPayments: [
+        { id: 1, amount: 200, frequency: 1, startDate: defaultStartDate }
+      ],
+      investments: [
+        { id: 1, amount: 800, frequency: 1, startDate: defaultStartDate, accountType: 'TAXABLE' }
+      ],
+      rateAdjustments: [],
+      refinances: [],
+      taxConfig: { ...defaultTaxConfig },
+      socialSecurityConfig: { ...defaultSocialSecurityConfig },
+      viewMode: 'nominal'
+    }
   }
 };

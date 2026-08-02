@@ -122,22 +122,29 @@ export default function ShareModal({
           {/* Section 2: Quick Presets */}
           <div className="mb-4 pb-3 border-bottom border-light">
             <h6 className="scandi-label text-black mb-2">2. Built-In Strategy Presets</h6>
-            <div className="row g-3">
+            <div className="d-flex flex-column gap-2">
               {Object.entries(presetScenarios).map(([key, preset]) => (
-                <div key={key} className="col-12 col-md-4">
-                  <div className="card h-100 border-dark rounded-0 bg-light p-3 d-flex flex-column justify-content-between">
-                    <div>
-                      <span className="scandi-label text-black d-block mb-1">{preset.name}</span>
-                      <p className="text-muted small lh-sm mb-3">{preset.description}</p>
-                    </div>
-                    <button 
-                      type="button" 
-                      className="btn btn-outline-dark btn-sm fw-bold w-100 scandi-label"
-                      onClick={() => handleApplyPreset(key)}
-                    >
-                      Load Template
-                    </button>
+                <div 
+                  key={key} 
+                  className="p-2 px-3 border border-dark bg-light d-flex align-items-center justify-content-between gap-2 rounded-0 shadow-sm"
+                  style={{ cursor: 'pointer', transition: 'background-color 0.15s ease' }}
+                  onClick={() => handleApplyPreset(key)}
+                  title={`Click to load "${preset.name}" scenario`}
+                >
+                  <div className="d-flex align-items-center gap-2 overflow-hidden me-2" style={{ minWidth: 0 }}>
+                    <span className="scandi-label text-black text-nowrap flex-shrink-0">{preset.name}:</span>
+                    <span className="text-muted small text-truncate d-none d-md-inline">{preset.description}</span>
                   </div>
+                  <button 
+                    type="button" 
+                    className="btn btn-sm btn-dark fw-bold scandi-label text-nowrap px-3 py-1 flex-shrink-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleApplyPreset(key);
+                    }}
+                  >
+                    Load Preset
+                  </button>
                 </div>
               ))}
             </div>
