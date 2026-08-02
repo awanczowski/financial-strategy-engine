@@ -27,7 +27,13 @@ export const defaultLoanConfig = {
   stopContributionsInRetirement: true,
   estimatedInflationRate: 2.5,
   monteCarloVolatility: 15.0,
-  monteCarloIterations: 1000
+  monteCarloIterations: 1000,
+  enableCoastFire: false,
+  coastFireCurrentAge: 30,
+  coastFireTargetAge: 65,
+  coastFireTargetAnnualExpense: 60000,
+  coastFireWithdrawalRate: 4.0,
+  coastFireTargetAmount: 1500000
 };
 
 export const defaultExtraPayments = [

@@ -123,6 +123,17 @@ export default function DashboardCards({
                 </span>
               </div>
 
+              {summary?.coastFireSummary?.enabled && (
+                <div className="d-flex justify-content-between mb-2 align-items-center">
+                  <span className="text-muted small text-uppercase">Coast FIRE Achieved</span>
+                  <span className="text-black fs-6">
+                    {summary.coastFireSummary.achieved 
+                      ? `Age ${summary.coastFireSummary.achievedAge} (${summary.coastFireSummary.achievedDate?.slice(0, 4) || `Yr ${summary.coastFireSummary.achievedYear}`})`
+                      : 'In Progress'}
+                  </span>
+                </div>
+              )}
+
               {socialSecurityConfig?.enableSocialSecurity && (
                 <>
                   <div className="d-flex justify-content-between mb-2 align-items-center">
@@ -241,6 +252,63 @@ export default function DashboardCards({
                       <span className="text-muted small fw-bold text-uppercase d-block mb-1">Roth (Tax-Free) Balance</span>
                       <span className="text-black fw-bolder fs-5 d-block mb-2">{formatCurrency(summary.taxSummary.finalTaxFreeMed)}</span>
                       <span className="small text-muted">Compounds tax-free; 100% tax-free retirement withdrawals.</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Coast FIRE Target & Milestone Analysis Card */}
+      {summary?.coastFireSummary?.enabled && (
+        <div className="row g-4 mb-4">
+          <div className="col-12">
+            <div className="card dashboard-card bg-white">
+              <div className="card-body p-4">
+                <div className="border-bottom border-dark pb-2 mb-3">
+                  <h6 className="card-subtitle scandi-label text-black mb-0 fs-6">Coast FIRE Target & Milestone Analysis</h6>
+                </div>
+
+                <div className="row g-4">
+                  <div className="col-md-6 col-lg-3 border-lg-end">
+                    <div>
+                      <span className="scandi-label text-muted d-block mb-1">Required Coast FIRE Today</span>
+                      <span className="text-black fw-bolder fs-4 d-block mb-1">{formatCurrency(summary.coastFireSummary.requiredToday)}</span>
+                      <span className="small text-muted d-block">Needed today to grow to FIRE target by age {loanConfig?.coastFireTargetAge || 65} without extra savings.</span>
+                    </div>
+                  </div>
+
+                  <div className="col-md-6 col-lg-3 border-lg-end">
+                    <div>
+                      <span className="scandi-label text-muted d-block mb-1">Full FIRE Target Nest Egg</span>
+                      <span className="text-black fw-bolder fs-4 d-block mb-1">{formatCurrency(summary.coastFireSummary.fullFireTarget)}</span>
+                      <span className="small text-muted d-block">Target nest egg at age {loanConfig?.coastFireTargetAge || 65} for retirement.</span>
+                    </div>
+                  </div>
+
+                  <div className="col-md-6 col-lg-3 border-lg-end">
+                    <div>
+                      <span className="scandi-label text-muted d-block mb-1">Current Portfolio Balance</span>
+                      <span className="text-black fw-bolder fs-4 d-block mb-1">{formatCurrency(summary.coastFireSummary.currentPortfolio)}</span>
+                      <span className="small text-muted d-block">Starting liquid investment portfolio balance.</span>
+                    </div>
+                  </div>
+
+                  <div className="col-md-6 col-lg-3">
+                    <div>
+                      <span className="scandi-label text-muted d-block mb-1">Coast FIRE Milestone</span>
+                      <span className="text-black fw-bolder fs-4 d-block mb-1">
+                        {summary.coastFireSummary.achieved 
+                          ? `Age ${summary.coastFireSummary.achievedAge} (${summary.coastFireSummary.achievedDate?.slice(0, 4) || `Yr ${summary.coastFireSummary.achievedYear}`})`
+                          : 'In Progress'}
+                      </span>
+                      <span className="small text-muted d-block">
+                        {summary.coastFireSummary.achieved 
+                          ? `Portfolio reaches required target in Year ${summary.coastFireSummary.achievedYear} (${summary.coastFireSummary.achievedDate || `Yr ${summary.coastFireSummary.achievedYear}`}).`
+                          : 'Portfolio has not yet reached required Coast FIRE target.'}
+                      </span>
                     </div>
                   </div>
                 </div>

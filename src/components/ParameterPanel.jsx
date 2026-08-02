@@ -408,6 +408,100 @@ export default function ParameterPanel({
                         />
                       )}
                     </div>
+
+                    {/* Coast FIRE Target Control Panel */}
+                    <div className="col-12 mt-3 border-top border-dark pt-3">
+                      <div className="card p-3 border-dark bg-white shadow-sm">
+                        <div className="d-flex align-items-center justify-content-between border-bottom border-dark pb-2 mb-3">
+                          <h6 className="scandi-label text-black mb-0 fs-6 d-flex align-items-center">
+                            Coast FIRE Target Strategy
+                            <InfoTooltip text="Calculates the portfolio balance needed today so compound growth alone reaches your FIRE target by retirement age without requiring future contributions." />
+                          </h6>
+                          <div className="d-flex align-items-center gap-2">
+                            <input 
+                              className="scandi-checkbox" 
+                              type="checkbox" 
+                              name="enableCoastFire" 
+                              id="enableCoastFireCheck"
+                              checked={Boolean(loanConfig.enableCoastFire)} 
+                              onChange={handleConfigChange}
+                            />
+                            <label className="scandi-label m-0 text-black lh-sm" htmlFor="enableCoastFireCheck" style={{ cursor: 'pointer' }}>
+                              Enable Coast FIRE
+                            </label>
+                          </div>
+                        </div>
+
+                        {!loanConfig.enableCoastFire ? (
+                          <div className="text-muted small fst-italic">
+                            Coast FIRE engine is currently <strong>disabled</strong>. Enable above to calculate portfolio growth targets needed to reach retirement without future contributions.
+                          </div>
+                        ) : (
+                          <div className="row g-3">
+                            <div className="col-sm-6 col-md-3">
+                              <label className="form-label scandi-label">Current Age</label>
+                              <input 
+                                name="coastFireCurrentAge" 
+                                type="number" 
+                                className="form-control scandi-input border-dark" 
+                                value={loanConfig.coastFireCurrentAge ?? 30} 
+                                onChange={handleConfigChange} 
+                              />
+                            </div>
+
+                            <div className="col-sm-6 col-md-3">
+                              <label className="form-label scandi-label">Target Ret. Age</label>
+                              <input 
+                                name="coastFireTargetAge" 
+                                type="number" 
+                                className="form-control scandi-input border-dark" 
+                                value={loanConfig.coastFireTargetAge ?? 65} 
+                                onChange={handleConfigChange} 
+                              />
+                            </div>
+
+                            <div className="col-sm-6 col-md-3">
+                              <label className="form-label scandi-label">Ann. Expenses ($)</label>
+                              <input 
+                                name="coastFireTargetAnnualExpense" 
+                                type="number" 
+                                step="1000" 
+                                className="form-control scandi-input border-dark" 
+                                value={loanConfig.coastFireTargetAnnualExpense ?? 60000} 
+                                onChange={handleConfigChange} 
+                              />
+                            </div>
+
+                            <div className="col-sm-6 col-md-3">
+                              <label className="form-label scandi-label">Safe Withdraw Rate (%)</label>
+                              <input 
+                                name="coastFireWithdrawalRate" 
+                                type="number" 
+                                step="0.1" 
+                                className="form-control scandi-input border-dark" 
+                                value={loanConfig.coastFireWithdrawalRate ?? 4.0} 
+                                onChange={handleConfigChange} 
+                              />
+                            </div>
+
+                            <div className="col-12 pt-2 border-top border-light">
+                              <label className="form-label scandi-label">Full FIRE Target Nest Egg ($)</label>
+                              <input 
+                                name="coastFireTargetAmount" 
+                                type="number" 
+                                step="50000" 
+                                className="form-control scandi-input border-dark fw-bold" 
+                                value={loanConfig.coastFireTargetAmount ?? 1500000} 
+                                onChange={handleConfigChange} 
+                              />
+                              <span className="text-muted small d-block mt-1">
+                                Portfolio required at age {loanConfig.coastFireTargetAge || 65} to generate ${Number(loanConfig.coastFireTargetAnnualExpense || 60000).toLocaleString()}/yr at {loanConfig.coastFireWithdrawalRate || 4.0}% SWR.
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                     
                     {/* MONTE CARLO TRIGGER */}
                     <div className="col-12 mt-4 pt-3 border-top border-dark">
