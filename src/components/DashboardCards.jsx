@@ -1,5 +1,6 @@
 import React from 'react';
 import { formatCurrency } from '../lib/formatters.js';
+import InfoTooltip from './InfoTooltip.jsx';
 
 export default function DashboardCards({ 
   initialBreakdown, 
@@ -268,7 +269,10 @@ export default function DashboardCards({
             <div className="card dashboard-card bg-white">
               <div className="card-body p-4">
                 <div className="border-bottom border-dark pb-2 mb-3">
-                  <h6 className="card-subtitle scandi-label text-black mb-0 fs-6">Coast FIRE Target & Milestone Analysis</h6>
+                  <h6 className="card-subtitle scandi-label text-black mb-0 fs-6 d-flex align-items-center">
+                    Coast FIRE Target & Milestone Analysis
+                    <InfoTooltip text="Calculates present-day portfolio needed so compound interest alone grows your nest egg to target retirement expenses without additional contributions." />
+                  </h6>
                 </div>
 
                 <div className="row g-4">
