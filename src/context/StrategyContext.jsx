@@ -137,10 +137,20 @@ export function StrategyProvider({ children }) {
       finalValue = value === '' ? '' : Number(value);
     }
 
-    setLoanConfig(prev => ({ 
-      ...prev, 
-      [name]: finalValue
-    }));
+    setLoanConfig(prev => {
+      const updated = { 
+        ...prev, 
+        [name]: finalValue
+      };
+      if (name === 'coastFireTargetAnnualExpense' || name === 'coastFireWithdrawalRate') {
+        const expense = name === 'coastFireTargetAnnualExpense' ? Number(finalValue) || 0 : Number(prev.coastFireTargetAnnualExpense) || 0;
+        const swr = name === 'coastFireWithdrawalRate' ? Number(finalValue) || 0 : Number(prev.coastFireWithdrawalRate) || 0;
+        if (expense > 0 && swr > 0) {
+          updated.coastFireTargetAmount = Math.round(expense / (swr / 100));
+        }
+      }
+      return updated;
+    });
   };
 
   const handleTaxConfigChange = (e) => {
