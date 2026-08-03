@@ -10,6 +10,7 @@ import {
   ResponsiveContainer
 } from 'recharts';
 import { formatCurrency, formatCurrencyCompact } from '../lib/formatters.js';
+import { useStrategy } from '../context/useStrategy.js';
 
 export default function MonteCarloModal({
   show,
@@ -20,6 +21,10 @@ export default function MonteCarloModal({
   socialSecurityConfig,
   onReRun
 }) {
+  const strategyCtx = useStrategy() || {};
+  const theme = strategyCtx.theme || 'light';
+  const isDark = theme === 'dark';
+
   const [selectedScenario, setSelectedScenario] = useState('med'); // 'low' | 'med' | 'high'
   const [mcViewMode, setMcViewMode] = useState('nominal'); // 'nominal' | 'real'
   const [localVolatility, setLocalVolatility] = useState(loanConfig.monteCarloVolatility ?? 15);
@@ -46,6 +51,20 @@ export default function MonteCarloModal({
 
   const activeResult = results ? (results[selectedScenario] || results.med) : null;
   const isReal = mcViewMode === 'real';
+
+  const mcAxisStroke = isDark ? '#a0a0a0' : '#000000';
+  const mcTickColor = isDark ? '#d0d0d0' : '#000000';
+  const mcGridColor = isDark ? '#303030' : '#e5e5e5';
+  const mcTooltipBg = isDark ? '#222222' : '#ffffff';
+  const mcTooltipBorder = isDark ? '#555555' : '#000000';
+  const mcTooltipText = isDark ? '#ffffff' : '#000000';
+
+  // Distinct High-Contrast Line Colors (Green = Bull, Cyan = Above Avg, Bold White/Blue = Median, Amber = Below Avg, Red = Bear)
+  const lineP90 = isDark ? '#34d399' : '#10b981';
+  const lineP75 = isDark ? '#38bdf8' : '#0284c7';
+  const lineP50 = isDark ? '#ffffff' : '#1d4ed8';
+  const lineP25 = isDark ? '#fbbf24' : '#f59e0b';
+  const lineP10 = isDark ? '#f87171' : '#ef4444';
 
   return (
     <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.75)', zIndex: 1040, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -298,21 +317,21 @@ export default function MonteCarloModal({
                 <div className="border border-dark p-3 bg-white" style={{ height: '420px' }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={activeResult ? activeResult.chartData : []} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" />
-                      <XAxis dataKey="year" stroke="#000" tick={{ fill: '#000', fontWeight: 'bold' }} />
-                      <YAxis stroke="#000" tick={{ fill: '#000', fontWeight: 'bold' }} tickFormatter={(val) => formatCurrencyCompact(val)} />
+                      <CartesianGrid strokeDasharray="3 3" stroke={mcGridColor} />
+                      <XAxis dataKey="year" stroke={mcAxisStroke} tick={{ fill: mcTickColor, fontWeight: 'bold' }} />
+                      <YAxis stroke={mcAxisStroke} tick={{ fill: mcTickColor, fontWeight: 'bold' }} tickFormatter={(val) => formatCurrencyCompact(val)} />
                       <Tooltip 
                         formatter={(value) => formatCurrency(value)} 
-                        contentStyle={{ backgroundColor: '#fff', border: '1px solid #000', color: '#000', borderRadius: '0', fontWeight: 'bold' }} 
-                        itemStyle={{ color: '#000' }}
+                        contentStyle={{ backgroundColor: mcTooltipBg, border: `1px solid ${mcTooltipBorder}`, color: mcTooltipText, borderRadius: '0', fontWeight: 'bold' }} 
+                        itemStyle={{ color: mcTooltipText }}
                       />
-                      <Legend wrapperStyle={{ paddingTop: '15px', fontWeight: 'bold', fontSize: '0.8rem' }} />
+                      <Legend wrapperStyle={{ paddingTop: '15px', fontWeight: 'bold', fontSize: '0.8rem', color: mcTickColor }} />
                       
-                      <Line type="monotone" dataKey={isReal ? "p90Real" : "p90"} stroke="#2563eb" name="90th % (Bull Market)" strokeWidth={2} strokeDasharray="5 5" dot={false} />
-                      <Line type="monotone" dataKey={isReal ? "p75Real" : "p75"} stroke="#60a5fa" name="75th % (Above Average)" strokeWidth={2} strokeDasharray="3 3" dot={false} />
-                      <Line type="monotone" dataKey={isReal ? "p50Real" : "p50"} stroke="#1d4ed8" name="50th % (Median Outcome)" strokeWidth={4} dot={false} activeDot={{ r: 6, fill: '#1d4ed8' }} />
-                      <Line type="monotone" dataKey={isReal ? "p25Real" : "p25"} stroke="#f97316" name="25th % (Below Average)" strokeWidth={2} strokeDasharray="3 3" dot={false} />
-                      <Line type="monotone" dataKey={isReal ? "p10Real" : "p10"} stroke="#ef4444" name="10th % (Bear Market)" strokeWidth={2} dot={false} activeDot={{ r: 6, fill: '#ef4444' }} />
+                      <Line type="monotone" dataKey={isReal ? "p90Real" : "p90"} stroke={lineP90} name="90th % (Bull Market)" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                      <Line type="monotone" dataKey={isReal ? "p75Real" : "p75"} stroke={lineP75} name="75th % (Above Average)" strokeWidth={2} strokeDasharray="3 3" dot={false} />
+                      <Line type="monotone" dataKey={isReal ? "p50Real" : "p50"} stroke={lineP50} name="50th % (Median Outcome)" strokeWidth={4} dot={false} activeDot={{ r: 6, fill: lineP50 }} />
+                      <Line type="monotone" dataKey={isReal ? "p25Real" : "p25"} stroke={lineP25} name="25th % (Below Average)" strokeWidth={2} strokeDasharray="3 3" dot={false} />
+                      <Line type="monotone" dataKey={isReal ? "p10Real" : "p10"} stroke={lineP10} name="10th % (Bear Market)" strokeWidth={2} dot={false} activeDot={{ r: 6, fill: lineP10 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>

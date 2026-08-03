@@ -1,12 +1,12 @@
 # Strategy Engine: Paydown vs. Invest Calculator
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-v1.9.0-black.svg)](package.json)
+[![Version](https://img.shields.io/badge/Version-v1.10.0-black.svg)](package.json)
 [![AI-Co-Created](https://img.shields.io/badge/Codebase-AI--Co--Created-8A2BE2.svg)](AI_TRANSPARENCY.md)
 [![CI Status](https://img.shields.io/badge/CI-Passing-brightgreen.svg)](.github/workflows/ci.yml)
 [![React](https://img.shields.io/badge/React-19.0-blue)](package.json)
 [![Vite](https://img.shields.io/badge/Vite-8.2-purple)](package.json)
-[![Test Suite](https://img.shields.io/badge/Tests-39_Passed-success)](src/components/__tests__/)
+[![Test Suite](https://img.shields.io/badge/Tests-43_Passed-success)](src/components/__tests__/)
 
 ## Overview
 Strategy Engine is a fluid, single-page React application designed to mathematically compare the long-term financial impacts of aggressive mortgage paydown strategies versus compounding market investments. It provides a comprehensive, period-by-period simulation of net worth trajectory, factoring in real estate appreciation, variable interest rates, flexible contribution schedules, multi-bucket tax treatment, refinance events, Social Security decumulation floors, and a robust retirement withdrawal phase.
@@ -23,6 +23,16 @@ Additionally, it features an advanced **Monte Carlo Simulation** to stress-test 
 7. **Statistical Stress Testing:** Execute thousands of randomized market simulations using lognormal distributions to measure portfolio survival probabilities across 55-year horizons with Social Security cash flows included.
 
 ## Key Features
+
+### Dark Mode & Neutral Monochrome Design System
+* **Dark Mode Toggle:** Smooth theme switcher in sticky top Navbar with flat SVG sun/moon indicators.
+* **Theme Persistence:** Stores user theme selection (`light` / `dark`) in `localStorage` and `StrategyContext`.
+* **Adapting Charts & UI Elements:** Dynamic Recharts background, tooltips, axis, and gridline adaptations for seamless low-light visualization.
+
+### Coast FIRE Target Engine & Milestone Tracking
+* **Coast FIRE Nest Egg Calculation:** Compute exact target retirement nest egg based on target retirement age, annual expenses, safe withdrawal rate (SWR), and expected investment return during the coast phase.
+* **Dashboard Milestone Cards:** Real-time visual progress indicators displaying current portfolio vs. target egg, target year, Coast FIRE status, and reach milestone year.
+* **Interactive UI Controls:** Focused inputs inside Wealth & Investing parameter tab, with scenario Base64 URL sharing and JSON backup support.
 
 ### Segmented Parameter Controls & Decluttered UI
 * **Tabbed Parameter Navigation:** Switch between focused input cards: Real Estate & Mortgage (default), Wealth & Investing, Retirement & Social Security, Tax & Jurisdiction, and All Controls (vertically stacked full-width layout).

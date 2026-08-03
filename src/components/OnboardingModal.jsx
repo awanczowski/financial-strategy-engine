@@ -35,6 +35,14 @@ export const TOUR_STEPS = [
   },
   {
     step: 5,
+    title: 'Coast FIRE Target Strategy',
+    subtitle: 'Zero-Contribution Growth & Portfolio Milestones',
+    description: 'Set your Coast FIRE target retirement age and annual expenses. Coast FIRE calculates the exact portfolio balance required today so compound growth alone reaches your nest egg target by retirement without needing ongoing contributions.',
+    tip: 'Reaching Coast FIRE early allows you to reduce work hours or pivot careers without compromising retirement security.',
+    badge: 'Coast FIRE'
+  },
+  {
+    step: 6,
     title: 'Tax Strategy & Jurisdiction Engine',
     subtitle: 'MID Shields, SALT Caps & Regional Presets',
     description: 'Enable the Tax Engine to model state income taxes (NY, CA, TX/FL presets), property tax, itemized Mortgage Interest Deduction (MID) shields up to the $750k cap, and custom SALT deduction limits.',
@@ -42,7 +50,7 @@ export const TOUR_STEPS = [
     badge: 'Tax Engine'
   },
   {
-    step: 6,
+    step: 7,
     title: 'Social Security & Retirement Decumulation',
     subtitle: 'Self & Spouse Income Floor and Portfolio Offsets',
     description: 'Configure Self and Spouse Social Security claim start dates, estimated monthly benefits, and annual COLA adjustments. Guaranteed Social Security income reduces required portfolio decumulation withdrawals dollar-for-dollar.',
@@ -50,7 +58,7 @@ export const TOUR_STEPS = [
     badge: 'Social Security'
   },
   {
-    step: 7,
+    step: 8,
     title: 'Real vs. Nominal Dollar Analysis',
     subtitle: 'Purchasing Power Inflation Discounting',
     description: 'Toggle between Nominal Future Dollars and Real Purchasing Power. Real mode discounts future nominal figures using your estimated inflation rate (e.g. 2.5% per year).',
@@ -58,7 +66,7 @@ export const TOUR_STEPS = [
     badge: 'Analysis Mode'
   },
   {
-    step: 8,
+    step: 9,
     title: 'Monte Carlo Stress Testing',
     subtitle: 'Sequence-of-Return Risk & Survival Probabilities',
     description: 'Run thousands of randomized market return simulations using lognormal return distributions. Stress-test your portfolio across volatile market cycles over 55-year horizons with Social Security cash flows included.',
@@ -66,11 +74,11 @@ export const TOUR_STEPS = [
     badge: 'Stress Testing'
   },
   {
-    step: 9,
+    step: 10,
     title: 'Share Scenarios & Built-in Templates',
     subtitle: 'Base64 Share Links, JSON Export & Strategy Gallery',
-    description: 'Generate Base64 encoded share URLs to save or send your strategy, export JSON configuration files, or load 6 pre-configured templates (FIRE, Tax-Shielded, Refinance Drop, Bi-Weekly Roth).',
-    tip: 'Click "Share" in the navigation bar at any time to copy your custom strategy URL.',
+    description: 'Generate Base64 encoded share URLs to save or send your strategy, export JSON configuration files, or load pre-configured templates (Coast FIRE, FIRE, Tax-Shielded, Refinance Drop, Bi-Weekly Roth).',
+    tip: 'Click "Share" in the navigation bar at any time to copy your custom strategy URL or load strategy presets.',
     badge: 'Sharing & Presets'
   }
 ];
