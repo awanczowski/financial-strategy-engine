@@ -31,11 +31,14 @@ describe('Coast FIRE Simulation Engine', () => {
     // $1.5M / (1.08)^30 = ~$149,066 required today
     expect(coastFireSummary.requiredToday).toBeGreaterThan(140000);
     expect(coastFireSummary.requiredToday).toBeLessThan(160000);
+    expect(coastFireSummary.startingPortfolio).toBe(100000);
+    expect(coastFireSummary.portfolioAtRetirement).toBeGreaterThan(0);
 
     // Initial investment is $100k plus $1,000/mo ongoing -> achieved within first few years
     expect(coastFireSummary.achieved).toBe(true);
     expect(coastFireSummary.achievedAge).toBeGreaterThanOrEqual(30);
     expect(coastFireSummary.achievedAge).toBeLessThan(40);
+    expect(coastFireSummary.achievedPortfolio).toBeGreaterThan(140000);
   });
 
   it('handles scenario where Coast FIRE is already achieved at start', () => {

@@ -294,9 +294,9 @@ export default function DashboardCards({
 
                   <div className="col-md-6 col-lg-3 border-lg-end">
                     <div>
-                      <span className="scandi-label text-muted d-block mb-1">Current Portfolio Balance</span>
-                      <span className="text-black fw-bolder fs-4 d-block mb-1">{formatCurrency(summary.coastFireSummary.currentPortfolio)}</span>
-                      <span className="small text-muted d-block">Starting liquid investment portfolio balance.</span>
+                      <span className="scandi-label text-muted d-block mb-1">Starting Portfolio Balance</span>
+                      <span className="text-black fw-bolder fs-4 d-block mb-1">{formatCurrency(summary.coastFireSummary.startingPortfolio ?? loanConfig?.initialInvestment ?? 0)}</span>
+                      <span className="small text-muted d-block">Starting liquid investment portfolio balance today.</span>
                     </div>
                   </div>
 
@@ -310,7 +310,7 @@ export default function DashboardCards({
                       </span>
                       <span className="small text-muted d-block">
                         {summary.coastFireSummary.achieved 
-                          ? `Portfolio reaches required target in Year ${summary.coastFireSummary.achievedYear} (${summary.coastFireSummary.achievedDate || `Yr ${summary.coastFireSummary.achievedYear}`}).`
+                          ? `Portfolio reaches ${summary.coastFireSummary.achievedPortfolio ? formatCurrency(summary.coastFireSummary.achievedPortfolio) : 'required target'} in Year ${summary.coastFireSummary.achievedYear}.`
                           : 'Portfolio has not yet reached required Coast FIRE target.'}
                       </span>
                     </div>
