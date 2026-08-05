@@ -1,7 +1,7 @@
 # Strategy Engine: Paydown vs. Invest Calculator
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-v1.10.0-black.svg)](package.json)
+[![Version](https://img.shields.io/badge/Version-v1.11.0-black.svg)](package.json)
 [![AI-Co-Created](https://img.shields.io/badge/Codebase-AI--Co--Created-8A2BE2.svg)](AI_TRANSPARENCY.md)
 [![CI Status](https://img.shields.io/badge/CI-Passing-brightgreen.svg)](.github/workflows/ci.yml)
 [![React](https://img.shields.io/badge/React-19.0-blue)](package.json)
@@ -23,6 +23,11 @@ Additionally, it features an advanced **Monte Carlo Simulation** to stress-test 
 7. **Statistical Stress Testing:** Execute thousands of randomized market simulations using lognormal distributions to measure portfolio survival probabilities across 55-year horizons with Social Security cash flows included.
 
 ## Key Features
+
+### Nordic Luxury Minimalist UI Redesign
+* **Warm Muted Palette & Glassmorphism:** Elegant Nordic design system featuring warm muted light & slate dark modes, subtle borders, frosted navigation headers, and refined typography.
+* **Streamlined Metric Cards & Visual Hierarchy:** Redesigned summary milestone cards, Coast FIRE target balance indicators, and unified parameter panel tabs.
+* **Enhanced Coast FIRE Engine Stability:** Resolved portfolio balance reporting alignment in summary cards and preset scenarios.
 
 ### Dark Mode & Neutral Monochrome Design System
 * **Dark Mode Toggle:** Smooth theme switcher in sticky top Navbar with flat SVG sun/moon indicators.
