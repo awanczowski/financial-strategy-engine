@@ -2,6 +2,68 @@ import React from 'react';
 import { formatCurrency } from '../lib/formatters.js';
 import InfoTooltip from './InfoTooltip.jsx';
 
+function RadialGauge({ payoffDate, simulationYears = 30 }) {
+  const currentYear = new Date().getFullYear();
+  let payoffYear = currentYear + 30;
+  if (payoffDate && payoffDate !== 'Not Paid Off' && payoffDate !== 'N/A') {
+    const parts = payoffDate.split('-');
+    if (parts.length > 0 && !isNaN(parts[0])) {
+      payoffYear = parseInt(parts[0], 10);
+    }
+  }
+
+  const startYear = currentYear;
+  const targetYear = startYear + Number(simulationYears);
+  const yearsPassed = Math.max(0, payoffYear - startYear);
+  const totalYears = Math.max(1, targetYear - startYear);
+  // percentage remaining or progress
+  const progressPct = Math.min(100, Math.max(0, Math.round(((totalYears - yearsPassed) / totalYears) * 100)));
+
+  const radius = 38;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (progressPct / 100) * circumference;
+
+  return (
+    <div className="d-flex align-items-center gap-3">
+      <div className="position-relative" style={{ width: 88, height: 88 }}>
+        <svg className="radial-progress-ring" width="88" height="88" viewBox="0 0 88 88">
+          <circle
+            cx="44"
+            cy="44"
+            r={radius}
+            fill="none"
+            stroke="var(--border-color)"
+            strokeWidth="6"
+          />
+          <circle
+            cx="44"
+            cy="44"
+            r={radius}
+            fill="none"
+            stroke="var(--accent-sage)"
+            strokeWidth="6"
+            strokeDasharray={circumference}
+            strokeDashoffset={strokeDashoffset}
+            strokeLinecap="round"
+            transform="rotate(-90 44 44)"
+          />
+        </svg>
+        <div className="position-absolute top-50 start-50 translate-middle text-center">
+          <span className="stat-display-number fs-6 text-black d-block leading-none">{progressPct}%</span>
+          <span className="scandi-label text-muted d-block" style={{ fontSize: '0.6rem' }}>Saved</span>
+        </div>
+      </div>
+      <div>
+        <span className="scandi-label text-muted d-block">Payoff Target</span>
+        <span className="stat-display-number fs-3 text-black d-block">{payoffYear}</span>
+        <span className="badge bg-light text-secondary border px-2 py-1 mt-1 font-sans" style={{ fontSize: '0.7rem' }}>
+          {payoffDate}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardCards({ 
   initialBreakdown, 
   summary, 
@@ -26,6 +88,62 @@ export default function DashboardCards({
 
   return (
     <>
+      {/* Hero Summary Grid with Radial Progress Gauge */}
+      <div className="row g-4 mb-4">
+        <div className="col-12 col-md-6 col-xl-3">
+          <div className="card dashboard-card bg-white h-100">
+            <div className="card-body p-4 d-flex align-items-center justify-content-between">
+              <RadialGauge payoffDate={payoffDate} simulationYears={loanConfig?.simulationYears || 30} />
+            </div>
+          </div>
+        </div>
+
+        <div className="col-12 col-md-6 col-xl-3">
+          <div className="card dashboard-card bg-white h-100">
+            <div className="card-body p-4 d-flex flex-column justify-content-between">
+              <span className="scandi-label text-muted d-block mb-1">Final Net Worth (Med)</span>
+              <div className="stat-display-number fs-2 text-black my-1">
+                {formatCurrency(summary.finalNetWorthMed)}
+              </div>
+              <div className="d-flex justify-content-between align-items-center text-muted small mt-2 pt-2 border-top border-muted">
+                <span>Range:</span>
+                <span className="font-sans">{formatCurrency(summary.finalNetWorthLow)} – {formatCurrency(summary.finalNetWorthHigh)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="col-12 col-md-6 col-xl-3">
+          <div className="card dashboard-card bg-white h-100">
+            <div className="card-body p-4 d-flex flex-column justify-content-between">
+              <span className="scandi-label text-muted d-block mb-1">Total Interest Paid</span>
+              <div className="stat-display-number fs-2 text-danger my-1">
+                {formatCurrency(summary.totalInterestPaid)}
+              </div>
+              <div className="d-flex justify-content-between align-items-center text-muted small mt-2 pt-2 border-top border-muted">
+                <span>Invested:</span>
+                <span className="font-sans text-black">{formatCurrency(summary.totalInvestContributed)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="col-12 col-md-6 col-xl-3">
+          <div className="card dashboard-card bg-white h-100">
+            <div className="card-body p-4 d-flex flex-column justify-content-between">
+              <span className="scandi-label text-muted d-block mb-1">Final Portfolio (Med)</span>
+              <div className="stat-display-number fs-2 text-black my-1">
+                {formatCurrency(summary.finalInvMed)}
+              </div>
+              <div className="d-flex justify-content-between align-items-center text-muted small mt-2 pt-2 border-top border-muted">
+                <span>Withdrawn:</span>
+                <span className="font-sans text-success">{formatCurrency(summary.totalWithdrawnOverall)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Lined Up Summary Dashboard */}
       <div className="row g-4 mb-4">
         {initialBreakdown && (
@@ -171,7 +289,7 @@ export default function DashboardCards({
                     <div key={ref.id || idx} className="col-md-6 col-lg-4 border-end border-light">
                       <div className="p-2">
                         <div className="d-flex justify-content-between align-items-center mb-2">
-                          <span className="badge bg-dark text-white font-monospace">{ref.startDate}</span>
+                          <span className="badge bg-dark text-white font-sans fw-semibold">{ref.startDate}</span>
                           <span className="small text-muted fw-bold">Month {ref.month}</span>
                         </div>
                         <div className="d-flex justify-content-between mb-1">
@@ -294,9 +412,9 @@ export default function DashboardCards({
 
                   <div className="col-md-6 col-lg-3 border-lg-end">
                     <div>
-                      <span className="scandi-label text-muted d-block mb-1">Current Portfolio Balance</span>
-                      <span className="text-black fw-bolder fs-4 d-block mb-1">{formatCurrency(summary.coastFireSummary.currentPortfolio)}</span>
-                      <span className="small text-muted d-block">Starting liquid investment portfolio balance.</span>
+                      <span className="scandi-label text-muted d-block mb-1">Starting Portfolio Balance</span>
+                      <span className="text-black fw-bolder fs-4 d-block mb-1">{formatCurrency(summary.coastFireSummary.startingPortfolio ?? loanConfig?.initialInvestment ?? 0)}</span>
+                      <span className="small text-muted d-block">Starting liquid investment portfolio balance today.</span>
                     </div>
                   </div>
 
@@ -310,7 +428,7 @@ export default function DashboardCards({
                       </span>
                       <span className="small text-muted d-block">
                         {summary.coastFireSummary.achieved 
-                          ? `Portfolio reaches required target in Year ${summary.coastFireSummary.achievedYear} (${summary.coastFireSummary.achievedDate || `Yr ${summary.coastFireSummary.achievedYear}`}).`
+                          ? `Portfolio reaches ${summary.coastFireSummary.achievedPortfolio ? formatCurrency(summary.coastFireSummary.achievedPortfolio) : 'required target'} in Year ${summary.coastFireSummary.achievedYear}.`
                           : 'Portfolio has not yet reached required Coast FIRE target.'}
                       </span>
                     </div>

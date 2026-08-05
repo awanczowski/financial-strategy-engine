@@ -293,6 +293,8 @@ export const presetScenarios = {
     data: {
       loanConfig: {
         ...defaultLoanConfig,
+        enableRetirement: true,
+        retirementDate: '2056-08-01',
         enableCoastFire: true,
         coastFireCurrentAge: 30,
         coastFireTargetAge: 60,

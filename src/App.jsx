@@ -51,7 +51,7 @@ function MainContent() {
 
   return (
     <div
-      className="strategy-engine text-dark font-monospace m-0 p-0 d-flex flex-column min-vh-100"
+      className="strategy-engine text-dark m-0 p-0 d-flex flex-column min-vh-100"
     >
 
       {/* Monte Carlo Modal Overlay */}
