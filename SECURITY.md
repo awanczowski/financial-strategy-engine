@@ -6,9 +6,9 @@ We release security patches and updates for the active release line of **Strateg
 
 | Version | Supported          |
 | ------- | ------------------ |
+| 1.11.x  | :white_check_mark: |
 | 1.10.x  | :white_check_mark: |
-| 1.9.x   | :white_check_mark: |
-| < 1.9   | :x:                |
+| < 1.10  | :x:                |
 
 ---
 
